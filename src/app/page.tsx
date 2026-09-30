@@ -1,69 +1,183 @@
 import Image from "next/image";
+import Link from "next/link";
+import {
+  ArrowDown,
+  ArrowRight,
+  ArrowUpRight,
+  BookOpen,
+  CalendarDays,
+  Clock3,
+  Heart,
+  MapPin,
+  Play,
+  Sparkles,
+} from "lucide-react";
+import { Reveal } from "../components/reveal";
+import { ministries, serviceInformation } from "../data/site-content";
 
-export default function Home() {
+const stories = [
+  "Faith for every season",
+  "A place to find your people",
+  "Hope for a new beginning",
+  "Growing together in Jesus",
+];
+
+export default function HomePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="home-page">
+      <section className="home-hero" aria-labelledby="hero-title">
+        <div className="home-hero__image" role="img" aria-label="Testimony House members welcoming visitors outside the church" />
+        <div className="home-hero__shade" />
+        <div className="home-hero__content page-width">
+          <p className="home-hero__eyebrow"><Image src="/images/logo/TESTIMONY%20LOGO.png" alt="" width={28} height={28} /> A COMMUNITY OF FAITH & FAMILY</p>
+          <h1 id="hero-title"><span>WELCOME TO</span><span className="home-hero__title-accent">TESTIMONY HOUSE</span></h1>
+          <p className="home-hero__description">Experience God’s love in a welcoming church family where faith grows, hope is renewed, and every story matters.</p>
+          <div className="home-hero__actions">
+            <Link className="pill-button pill-button--purple" href="/livestream">Watch live <span><Play size={15} fill="currentColor" /></span></Link>
+            <Link className="pill-button pill-button--white" href="/sermons">Previous sermons <span><ArrowUpRight size={18} /></span></Link>
+            <Link className="pill-button pill-button--glass" href="/register">Membership form <span><ArrowUpRight size={18} /></span></Link>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <Link className="home-hero__scroll" href="#welcome" aria-label="Scroll to discover"><span>SCROLL TO DISCOVER</span><ArrowDown size={17} /></Link>
+        <div className="home-hero__side-note">ONE FAMILY · MANY STORIES</div>
+      </section>
+
+      <div className="ticker" aria-label="Faith, hope, and a place to belong">
+        <div className="ticker__track">
+          {[...stories, ...stories].map((story, index) => (
+            <span key={`${story}-${index}`}>{story}<Image src="/images/logo/TESTIMONY%20LOGO.png" alt="" width={28} height={28} /></span>
+          ))}
         </div>
-      </main>
+      </div>
+
+      <section className="welcome-section section-pad page-width" id="welcome">
+        <Reveal className="welcome-section__visual">
+          <div className="welcome-art">
+            <div className="welcome-art__sun" />
+            <div className="welcome-art__cross"><span /></div>
+            <div className="welcome-art__hill welcome-art__hill--back" />
+            <div className="welcome-art__hill welcome-art__hill--front" />
+            <div className="welcome-art__caption"><span>TESTIMONY HOUSE</span><strong>A place to call home.</strong></div>
+          </div>
+          <div className="welcome-section__badge"><Sparkles size={17} /><span>COME AS<br />YOU ARE</span></div>
+        </Reveal>
+        <Reveal className="welcome-section__copy">
+          <p className="section-kicker">WELCOME TO TESTIMONY HOUSE</p>
+          <h2>There’s a place for <em>your story.</em></h2>
+          <p>We are a church family learning to follow Jesus, care for one another, and make room for every generation to grow. If you’re exploring faith or looking for a place to belong, we’d love to welcome you.</p>
+          <ul className="welcome-points">
+            <li><span>01</span> Grow deeper in faith</li>
+            <li><span>02</span> Find a community to call home</li>
+            <li><span>03</span> Serve with purpose</li>
+          </ul>
+          <Link className="text-arrow" href="/about">Discover our church <ArrowRight size={17} /></Link>
+        </Reveal>
+      </section>
+
+      <section className="worship-section">
+        <div className="worship-section__inner page-width">
+          <Reveal className="worship-section__heading">
+            <p className="section-kicker">YOUR SUNDAY STARTS HERE</p>
+            <h2>Worship <em>with us.</em></h2>
+          </Reveal>
+          <Reveal className="worship-card">
+            <div className="worship-card__visual" aria-hidden="true">
+              <div className="worship-card__sun" />
+              <div className="worship-card__building"><span /><i /><b /></div>
+              <div className="worship-card__tree"><i /><b /></div>
+              <span className="worship-card__image-caption">A PLACE TO GATHER</span>
+            </div>
+            <div className="worship-card__details">
+              <span className="worship-card__eyebrow"><span /> YOU’RE INVITED</span>
+              <h3>Join us this Sunday</h3>
+              <p className="worship-card__time"><Clock3 size={16} /> {serviceInformation.time}</p>
+              <p className="worship-card__place"><MapPin size={16} /> {serviceInformation.address}</p>
+              <Link href="/contact" className="round-arrow" aria-label="Get service and location details"><ArrowRight size={19} /></Link>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      <section className="ministries-section section-pad">
+        <div className="page-width">
+          <Reveal className="section-intro">
+            <p className="section-kicker">GROWING SIDE BY SIDE</p>
+            <h2>Find your <em>people.</em></h2>
+            <p>From little ones to grown-ups, there’s room for every age and every season of life.</p>
+          </Reveal>
+          <div className="ministry-tiles">
+            {ministries.map((ministry, index) => {
+              const Icon = ministry.icon;
+              return (
+                <Reveal key={ministry.name} className={`ministry-tile ministry-tile--${index + 1}`}>
+                  <Link href="/ministries" className="ministry-tile__link">
+                    <div className="ministry-tile__art"><span>{String(index + 1).padStart(2, "0")}</span><Icon size={27} strokeWidth={1.5} /></div>
+                    <div className="ministry-tile__bottom"><div><h3>{ministry.name}</h3><p>{ministry.description}</p></div><ArrowUpRight size={19} /></div>
+                  </Link>
+                </Reveal>
+              );
+            })}
+          </div>
+          <div className="ministries-section__more"><Link className="pill-button pill-button--outline" href="/ministries">Explore ministries <span><ArrowRight size={16} /></span></Link></div>
+        </div>
+      </section>
+
+      <section className="message-section">
+        <div className="message-section__inner page-width">
+          <Reveal className="message-section__copy">
+            <p className="section-kicker">A WORD FOR YOUR WEEK</p>
+            <h2>Make space for <em>the message.</em></h2>
+            <p>Find encouragement, revisit a recent message, and grow in the Word wherever you are.</p>
+            <Link className="pill-button pill-button--purple" href="/sermons">Browse sermons <span><ArrowUpRight size={17} /></span></Link>
+          </Reveal>
+          <Reveal className="sermon-card">
+            <div className="sermon-card__art"><div className="sermon-card__rays" /><div className="sermon-card__cross"><span /></div><span className="sermon-card__scripture">PSALM 66:16</span><button type="button" aria-label="Sermon player coming soon"><Play size={22} fill="currentColor" /></button></div>
+            <div className="sermon-card__details"><span><BookOpen size={15} /> LATEST MESSAGE</span><strong>Sermon details coming soon</strong><small>Messages from Testimony House</small></div>
+          </Reveal>
+        </div>
+      </section>
+
+      <section className="testimony-section section-pad page-width">
+        <Reveal className="testimony-section__heading">
+          <p className="section-kicker">GOD IS STILL WRITING</p>
+          <h2>Every life has a <em>testimony.</em></h2>
+          <p>Stories of faith remind us that hope is alive and no one walks alone.</p>
+        </Reveal>
+        <Reveal className="testimony-feature">
+          <span className="testimony-feature__quote">“</span>
+          <div><span className="testimony-feature__label">A CHURCH FAMILY</span><blockquote>There is room for new beginnings, for questions, and for every story God is still unfolding.</blockquote><span className="testimony-feature__attribution">SHARE YOUR STORY WITH US</span></div>
+          <Link href="/testimonies" className="round-arrow" aria-label="Read testimonies"><ArrowRight size={19} /></Link>
+        </Reveal>
+        <div className="testimony-section__actions"><Link className="text-arrow" href="/testimonies">Read testimonies <ArrowRight size={17} /></Link><Link className="text-arrow" href="/prayer-request">Request prayer <Heart size={16} /></Link></div>
+      </section>
+
+      <section className="gather-section">
+        <div className="gather-section__inner page-width">
+          <Reveal className="gather-section__content">
+            <p className="section-kicker section-kicker--light">YOUR NEXT CHAPTER CAN START HERE</p>
+            <h2>Come be a part<br />of <em>the family.</em></h2>
+            <p>We can’t wait to meet you. Take a first step, meet our church family, and find the place God is preparing for you.</p>
+            <div className="gather-section__actions"><Link className="pill-button pill-button--white" href="/register">Be a member <span><ArrowUpRight size={17} /></span></Link><Link href="/events" className="gather-section__secondary">See what’s happening <ArrowRight size={15} /></Link></div>
+          </Reveal>
+          <div className="gather-section__emblem" aria-hidden="true"><Image src="/images/logo/TESTIMONY%20LOGO.png" alt="" width={210} height={210} /><span>FAITH · FAMILY · PURPOSE</span></div>
+          <span className="gather-section__spark gather-section__spark--one">✳</span><span className="gather-section__spark gather-section__spark--two">✳</span>
+        </div>
+      </section>
+
+      <section className="events-section section-pad page-width">
+        <Reveal className="events-section__top">
+          <div><p className="section-kicker">LIFE TOGETHER</p><h2>Good things are <em>gathering.</em></h2></div>
+          <Link className="text-arrow" href="/events">See all events <ArrowRight size={17} /></Link>
+        </Reveal>
+        <Reveal className="event-row">
+          <div className="event-row__date"><CalendarDays size={24} /><span>COMING<br />SOON</span></div>
+          <div className="event-row__copy"><span>TESTIMONY HOUSE</span><h3>There’s always room at the table.</h3><p>Our upcoming gatherings will be shared here. Check back soon for the next opportunity to connect.</p></div>
+          <Link className="round-arrow" href="/events" aria-label="Explore upcoming events"><ArrowRight size={19} /></Link>
+        </Reveal>
+      </section>
+
+      <div className="closing-ribbon"><div className="closing-ribbon__track">{[...stories, ...stories].map((story, index) => <span key={`closing-${index}`}>{story}<Image src="/images/logo/TESTIMONY%20LOGO.png" alt="" width={28} height={28} /></span>)}</div></div>
+      <Link className="floating-give" href="/give"><span><ArrowUpRight size={16} /></span> Online giving</Link>
     </div>
   );
 }
