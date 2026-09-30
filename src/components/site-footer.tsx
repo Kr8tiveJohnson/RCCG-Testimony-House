@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Mail, Phone } from "lucide-react";
-import { FaTiktok, FaYoutube } from "react-icons/fa6";
+import { FaFacebookF, FaTiktok, FaYoutube } from "react-icons/fa6";
 
 const footerLinks = [
 	{ label: "About", href: "/about" },
@@ -52,6 +52,7 @@ export function SiteFooter() {
 					</div>
 					<div className="site-footer__socials">
 						<span>FOLLOW ALONG</span>
+						<a href="https://web.facebook.com/profile.php?id=61552666253336" target="_blank" rel="noreferrer" aria-label="RCCG Testimony House on Facebook"><FaFacebookF /> Facebook <ArrowUpRight size={13} /></a>
 						<a href="https://www.youtube.com/@testimonyhouselp103" target="_blank" rel="noreferrer" aria-label="RCCG Testimony House on YouTube"><FaYoutube /> YouTube <ArrowUpRight size={13} /></a>
 						<a href="https://www.tiktok.com/@rccgtestimonyhouselp103" target="_blank" rel="noreferrer" aria-label="RCCG Testimony House on TikTok"><FaTiktok /> TikTok <ArrowUpRight size={13} /></a>
 					</div>

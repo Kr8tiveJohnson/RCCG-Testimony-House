@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, ArrowUpRight, Mail, Music2, Phone, Youtube } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Mail, Phone } from "lucide-react";
+import { FaFacebookF, FaTiktok, FaYoutube } from "react-icons/fa6";
 
 export const metadata: Metadata = { title: "Contact us" };
 
@@ -31,8 +32,9 @@ export default function ContactPage() {
         <div className="contact-socials">
           <div><p className="section-kicker">FOLLOW THE CHURCH</p><h2>Stay connected.</h2></div>
           <div className="contact-socials__links">
-            <a href="https://www.youtube.com/@testimonyhouselp103" target="_blank" rel="noreferrer"><Youtube size={19} /> YouTube <ArrowUpRight size={15} /></a>
-            <a href="https://www.tiktok.com/@rccgtestimonyhouselp103" target="_blank" rel="noreferrer"><Music2 size={19} /> TikTok <ArrowUpRight size={15} /></a>
+            <a href="https://web.facebook.com/profile.php?id=61552666253336" target="_blank" rel="noreferrer"><FaFacebookF /> Facebook <ArrowUpRight size={15} /></a>
+            <a href="https://www.youtube.com/@testimonyhouselp103" target="_blank" rel="noreferrer"><FaYoutube /> YouTube <ArrowUpRight size={15} /></a>
+            <a href="https://www.tiktok.com/@rccgtestimonyhouselp103" target="_blank" rel="noreferrer"><FaTiktok /> TikTok <ArrowUpRight size={15} /></a>
           </div>
           <p className="contact-socials__handle">TikTok: @rccgtestimonyhouselp103</p>
         </div>
