@@ -91,14 +91,16 @@ export default function HomePage() {
                   {serviceInformation.schedule.map((item) => (
                     <div key={item.label} className="worship-card__time-item">
                       <strong>{item.label}</strong>
-                      <span>•</span>
                       <time>{item.time}</time>
                     </div>
                   ))}
                 </div>
               </div>
               <p className="worship-card__place"><MapPin size={16} /> <span>{serviceInformation.address}</span></p>
-              <Link href="/contact" className="round-arrow" aria-label="Get service and location details"><ArrowRight size={19} /></Link>
+              <Link href="/contact" className="worship-card__details-link" aria-label="Get service and location details">
+                Get service details
+                <ArrowRight size={18} />
+              </Link>
             </div>
           </Reveal>
         </div>
