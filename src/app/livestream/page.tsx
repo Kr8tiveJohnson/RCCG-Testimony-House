@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowUpRight, Radio, VideoOff } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Watch live",
-  description: "The RCCG Testimony House livestream page is under construction and will be available in a future update.",
+  description: "Watch RCCG Testimony House services online. Livestream details will be announced when the stream is available.",
 };
 
 export default function LivestreamPage() {

@@ -9,7 +9,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 	const ministry = ministries.find((item) => item.slug === slug);
 
 	return {
-		title: ministry ? `${ministry.name} | RCCG Testimony House` : "Ministry",
+		title: ministry ? `${ministry.name} ministry` : "Church ministry",
+		description: ministry
+			? `${ministry.heading} Discover the ${ministry.name} ministry at RCCG Testimony House.`
+			: "Explore ministries and find a place to grow and serve at RCCG Testimony House.",
 	};
 }
 

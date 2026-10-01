@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowUpRight, Home } from "lucide-react";
 import { ministries } from "../../data/site-content";
+
+export const metadata: Metadata = {
+	title: "Church ministries",
+	description: "Explore children, youth, young adult, music, outreach, and other ministries at RCCG Testimony House.",
+};
 
 export default function MinistriesPage() {
 	return (

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -21,6 +22,11 @@ const stories = [
   "Growing together in Jesus",
 ];
 
+export const metadata: Metadata = {
+  title: { absolute: "RCCG Testimony House | A Place to Grow in Faith" },
+  description: "Join RCCG Testimony House in Lagos for worship, prayer, community, and a church family where faith grows and every story matters.",
+};
+
 export default function HomePage() {
   return (
     <div className="home-page">
@@ -32,9 +38,9 @@ export default function HomePage() {
           <h1 id="hero-title"><span>WELCOME TO</span><span className="home-hero__title-accent">TESTIMONY HOUSE</span></h1>
           <p className="home-hero__description">Experience God’s love in a welcoming church family where faith grows, hope is renewed, and every story matters.</p>
           <div className="home-hero__actions">
-            <Link className="pill-button pill-button--purple" href="/livestream">Watch live <span><Play size={15} fill="currentColor" /></span></Link>
-            <Link className="pill-button pill-button--white" href="/sermons">Previous sermons <span><ArrowUpRight size={18} /></span></Link>
-            <Link className="pill-button pill-button--glass" href="/register">Membership form <span><ArrowUpRight size={18} /></span></Link>
+            <Link className="pill-button pill-button--purple" href="/register">Membership form <span><ArrowUpRight size={18} /></span></Link>
+            <Link className="pill-button pill-button--white" href="/livestream">Watch live <span><Play size={15} fill="currentColor" /></span></Link>
+            <Link className="pill-button pill-button--glass" href="/sermons">Previous sermons <span><ArrowUpRight size={18} /></span></Link>
           </div>
         </div>
         <Link className="home-hero__scroll" href="#welcome" aria-label="Scroll to discover"><span>SCROLL TO DISCOVER</span><ArrowDown size={17} /></Link>

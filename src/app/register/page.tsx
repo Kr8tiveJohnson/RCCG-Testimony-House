@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Membership form",
-  description: "Register your interest in becoming a member of RCCG Testimony House.",
+  description: "Complete the RCCG Testimony House membership form to share your details and connect with the church family in Lagos.",
 };
 
 export default function RegisterPage() {
@@ -28,7 +28,7 @@ export default function RegisterPage() {
             <p><b>*</b> Required</p>
           </div>
           <MemberRegistrationForm />
-          <p className="registration-privacy"><ShieldCheck size={15} /> This is a front-end preview. Submissions are not sent or stored yet.</p>
+          <p className="registration-privacy"><ShieldCheck size={15} /> This is a front-end preview. Submissions are not sent or stored yet. <Link href="/privacy-policy">Privacy policy</Link></p>
           <Link className="registration-help" href="/contact">Need help? Contact the church <ArrowRight size={15} /></Link>
         </div>
       </div>

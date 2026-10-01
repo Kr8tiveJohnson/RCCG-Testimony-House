@@ -3,7 +3,10 @@ import Link from "next/link";
 import { ArrowLeft, ArrowUpRight, Mail, Phone } from "lucide-react";
 import { FaFacebookF, FaTiktok, FaYoutube } from "react-icons/fa6";
 
-export const metadata: Metadata = { title: "Contact us" };
+export const metadata: Metadata = {
+  title: "Contact us",
+  description: "Contact RCCG Testimony House in Lagos by email or phone, and follow the church on social media.",
+};
 
 export default function ContactPage() {
   return (

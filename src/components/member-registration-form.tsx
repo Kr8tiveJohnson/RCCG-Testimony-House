@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, CircleAlert } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
 const titles = ["Arch", "Ast. Pst", "Barr", "Dcn", "Dcns", "Dr", "Engr", "Evang", "Miss", "Mr", "Mrs", "Prof", "Pst", "Rev'd"];
@@ -36,9 +36,9 @@ const smallGroups = [
   },
 ];
 
-function CheckGroup({ name, title, options, required = false }: { name: string; title: string; options: string[]; required?: boolean }) {
+function CheckGroup({ name, title, options, required = false, invalid = false }: { name: string; title: string; options: string[]; required?: boolean; invalid?: boolean }) {
   return (
-    <fieldset className="membership-check-group" data-required-group={required ? "true" : undefined}>
+    <fieldset className="membership-check-group" data-required-group={required ? name : undefined} data-invalid={invalid || undefined} aria-invalid={invalid}>
       <legend>{title}{required ? <span> *</span> : null}<small>{required ? "Select all that apply" : "Optional · Select all that apply"}</small></legend>
       <div className="membership-check-group__options">
         {options.map((option) => (
@@ -58,31 +58,34 @@ function CheckGroup({ name, title, options, required = false }: { name: string; 
 }
 
 export function MemberRegistrationForm() {
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState<{ type: "error" | "info"; message: string } | null>(null);
+  const [invalidGroup, setInvalidGroup] = useState<string | null>(null);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
-    const requiredGroups = Array.from(form.querySelectorAll<HTMLElement>("[data-required-group='true']"));
+    const requiredGroups = Array.from(form.querySelectorAll<HTMLElement>("[data-required-group]"));
     const missingGroup = requiredGroups.find((group) => !group.querySelector<HTMLInputElement>("input[type='checkbox']:checked"));
     if (missingGroup) {
+      setInvalidGroup(missingGroup.dataset.requiredGroup ?? null);
       missingGroup.scrollIntoView({ behavior: "smooth", block: "center" });
-      setStatus("Please select at least one option in each required interests section.");
+      setStatus({ type: "error", message: "Please select at least one option in each required interests section." });
       return;
     }
 
+    setInvalidGroup(null);
     const photo = form.elements.namedItem("photograph") as HTMLInputElement | null;
     if (photo?.files?.[0] && photo.files[0].size > 1024 * 1024) {
-      setStatus("The photograph must be no larger than 1 MB.");
+      setStatus({ type: "error", message: "The photograph must be no larger than 1 MB." });
       photo.focus();
       return;
     }
 
-    setStatus("This membership form is a design preview only. Your information and photo have not been sent or saved.");
+    setStatus({ type: "info", message: "This membership form is a preview only. Your information and photo have not been sent or saved." });
   }
 
   return (
-    <form className="registration-form membership-form" onSubmit={handleSubmit}>
+    <form className="registration-form membership-form" onSubmit={handleSubmit} onChange={() => { if (status?.type === "error") { setStatus(null); setInvalidGroup(null); } }}>
       <div className="registration-form__section-title"><span>01</span><strong>Church connection</strong></div>
       <div className="registration-form__row">
         <label>Which category best describes you? <span>*</span>
@@ -130,14 +133,14 @@ export function MemberRegistrationForm() {
       <label>Wedding anniversary date<input name="anniversary" type="date" /></label>
 
       <div className="registration-form__section-title"><span>04</span><strong>Programmes &amp; groups</strong></div>
-      <CheckGroup name="programmes" title="Programmes of interest" options={programmes} required />
-      {smallGroups.map((group) => <CheckGroup key={group.name} {...group} required />)}
+      <CheckGroup name="programmes" title="Programmes of interest" options={programmes} required invalid={invalidGroup === "programmes"} />
+      {smallGroups.map((group) => <CheckGroup key={group.name} {...group} required invalid={invalidGroup === group.name} />)}
 
       <div className="registration-form__section-title"><span>05</span><strong>Photograph &amp; consent</strong></div>
       <label className="membership-photo">Photograph <span className="registration-form__optional">OPTIONAL · IMAGE UP TO 1 MB</span><input name="photograph" type="file" accept="image/*" /></label>
       <label className="registration-form__consent"><input name="consent" type="checkbox" required /><span>I consent to RCCG Testimony House using the information I provide for church administration, programme planning, and follow-up. I understand it will be treated confidentially. <b>*</b></span></label>
       <button className="button button--coral registration-form__submit" type="submit">Submit membership form <ArrowRight size={16} /></button>
-      {status ? <p className="registration-form__status" role="status"><CheckCircle2 size={18} /> {status}</p> : null}
+      {status ? <p className={`registration-form__status registration-form__status--${status.type}`} role={status.type === "error" ? "alert" : "status"}>{status.type === "error" ? <CircleAlert size={18} /> : <CheckCircle2 size={18} />} {status.message}</p> : null}
     </form>
   );
 }
