@@ -10,6 +10,11 @@ export const metadata: Metadata = {
 	},
 	description:
 		"Welcome to RCCG Testimony House. Find a church family, grow in faith, and discover the next step in your journey.",
+	icons: {
+		icon: "/images/logo/TESTIMONY LOGO.png",
+		shortcut: "/images/logo/TESTIMONY LOGO.png",
+		apple: "/images/logo/TESTIMONY LOGO.png",
+	},
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

@@ -37,6 +37,14 @@ export function SiteHeader() {
 					<Image src="/images/logo/TESTIMONY%20LOGO.png" alt="RCCG Testimony House Youth" width={180} height={82} priority className="brand__logo" />
 				</Link>
 
+				<nav className="site-nav" aria-label="Main navigation">
+					{navigation.map((item) => (
+						<Link key={item.href} href={item.href} onClick={() => setIsMenuOpen(false)}>
+							{item.label}
+						</Link>
+					))}
+				</nav>
+
 				<button
 					type="button"
 					className="menu-toggle"

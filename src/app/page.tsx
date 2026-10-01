@@ -10,7 +10,6 @@ import {
   Heart,
   MapPin,
   Play,
-  Sparkles,
 } from "lucide-react";
 import { Reveal } from "../components/reveal";
 import { ministries, serviceInformation } from "../data/site-content";
@@ -53,13 +52,9 @@ export default function HomePage() {
       <section className="welcome-section section-pad page-width" id="welcome">
         <Reveal className="welcome-section__visual">
           <div className="welcome-art">
-            <div className="welcome-art__sun" />
-            <div className="welcome-art__cross"><span /></div>
-            <div className="welcome-art__hill welcome-art__hill--back" />
-            <div className="welcome-art__hill welcome-art__hill--front" />
             <div className="welcome-art__caption"><span>TESTIMONY HOUSE</span><strong>A place to call home.</strong></div>
           </div>
-          <div className="welcome-section__badge"><Sparkles size={17} /><span>COME AS<br />YOU ARE</span></div>
+          <div className="welcome-section__badge"> <span>COME AS<br />YOU ARE</span></div>
         </Reveal>
         <Reveal className="welcome-section__copy">
           <p className="section-kicker">WELCOME TO TESTIMONY HOUSE</p>
@@ -90,8 +85,19 @@ export default function HomePage() {
             <div className="worship-card__details">
               <span className="worship-card__eyebrow"><span /> YOU’RE INVITED</span>
               <h3>Join us this Sunday</h3>
-              <p className="worship-card__time"><Clock3 size={16} /> {serviceInformation.time}</p>
-              <p className="worship-card__place"><MapPin size={16} /> {serviceInformation.address}</p>
+              <div className="worship-card__time">
+                <Clock3 size={16} />
+                <div className="worship-card__time-list">
+                  {serviceInformation.schedule.map((item) => (
+                    <div key={item.label} className="worship-card__time-item">
+                      <strong>{item.label}</strong>
+                      <span>•</span>
+                      <time>{item.time}</time>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <p className="worship-card__place"><MapPin size={16} /> <span>{serviceInformation.address}</span></p>
               <Link href="/contact" className="round-arrow" aria-label="Get service and location details"><ArrowRight size={19} /></Link>
             </div>
           </Reveal>
@@ -108,10 +114,12 @@ export default function HomePage() {
           <div className="ministry-tiles">
             {ministries.map((ministry, index) => {
               const Icon = ministry.icon;
+              const artStyle = ministry.image ? ({ ["--tile-image" as string]: `url(${ministry.image})` } as const) : undefined;
+
               return (
                 <Reveal key={ministry.name} className={`ministry-tile ministry-tile--${index + 1}`}>
-                  <Link href="/ministries" className="ministry-tile__link">
-                    <div className="ministry-tile__art"><span>{String(index + 1).padStart(2, "0")}</span><Icon size={27} strokeWidth={1.5} /></div>
+                  <Link href={`/ministries/${ministry.slug}`} className="ministry-tile__link">
+                    <div className="ministry-tile__art" style={artStyle}><span>{String(index + 1).padStart(2, "0")}</span><Icon size={27} strokeWidth={1.5} /></div>
                     <div className="ministry-tile__bottom"><div><h3>{ministry.name}</h3><p>{ministry.description}</p></div><ArrowUpRight size={19} /></div>
                   </Link>
                 </Reveal>
