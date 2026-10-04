@@ -16,26 +16,11 @@ const programmes = [
   "Music & Entertainment", "Lifestyle & Community", "Missions & Field Mobilization", "Community Impact & Outreach Programmes",
   "Pastoral Training & Church Planting", "None of the above",
 ];
-const smallGroups = [
+const familyGroups = [
   {
     name: "familyGroups",
     title: "Family & relationship groups",
     options: ["Single Parents", "Couples Fellowship (Less than 10 years)", "Couples Fellowship (above 10 years)", "Widows / Widowers", "Retirees & Seniors", "None of the above"],
-  },
-  {
-    name: "wellnessGroups",
-    title: "Health, wellness & lifestyle groups",
-    options: ["Health & Fitness", "Mental Health & Wellness", "Football Group", "Foodies Group", "None of the above"],
-  },
-  {
-    name: "communityGroups",
-    title: "Community, service & social impact",
-    options: ["Community Impact & Outreach", "Environmental Enthusiasts", "None of the above"],
-  },
-  {
-    name: "careerGroups",
-    title: "Career & business life groups",
-    options: ["Construction & Real Estate", "Manufacturing & Industry", "Transportation & Logistics", "Technology & IT", "Hospitality & Tourism", "Telecommunication", "Creative & Media", "Arts & Entertainment", "Education", "Health", "Legal & Judiciary", "Oil, Gas & Power", "None of the above"],
   },
 ];
 
@@ -182,7 +167,7 @@ export function MemberRegistrationForm() {
 
       <div className="registration-form__section-title"><span>04</span><strong>Programmes &amp; groups</strong></div>
       <CheckGroup name="programmes" title="Programmes of interest" options={programmes} required invalid={invalidGroup === "programmes"} />
-      {smallGroups.map((group) => <CheckGroup key={group.name} {...group} required invalid={invalidGroup === group.name} />)}
+      {familyGroups.map((group) => <CheckGroup key={group.name} {...group} required invalid={invalidGroup === group.name} />)}
 
       <div className="registration-form__section-title"><span>05</span><strong>Photograph &amp; consent</strong></div>
       <label className="membership-photo">Photograph <span className="registration-form__optional">OPTIONAL · IMAGE UP TO 1 MB</span><input name="photograph" type="file" accept="image/*" /></label>
