@@ -2,6 +2,7 @@
 
 import { ArrowRight, CheckCircle2, CircleAlert, X } from "lucide-react";
 import { useState, type FormEvent } from "react";
+import { googleAppsScriptUrl } from "../lib/google-sheets";
 
 const titles = ["Arch", "Ast. Pst", "Barr", "Dcn", "Dcns", "Dr", "Engr", "Evang", "Miss", "Mr", "Mrs", "Prof", "Pst", "Rev'd"];
 const years = Array.from({ length: new Date().getFullYear() - 1994 + 1 }, (_, index) => String(1994 + index));
@@ -63,8 +64,6 @@ export function MemberRegistrationForm() {
   const [status, setStatus] = useState<{ type: "error" | "info"; message: string } | null>(null);
   const [invalidGroup, setInvalidGroup] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const googleSheetUrl = process.env.NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL || process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL;
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
@@ -85,7 +84,7 @@ export function MemberRegistrationForm() {
       return;
     }
 
-    if (googleSheetUrl) {
+    if (googleAppsScriptUrl) {
       const formData = new FormData(form);
       formData.delete("photograph");
       const submissionData = new URLSearchParams();
@@ -96,7 +95,7 @@ export function MemberRegistrationForm() {
       try {
         setStatus({ type: "info", message: "Submitting your details to the church database..." });
 
-        const response = await fetch(googleSheetUrl, {
+        const response = await fetch(googleAppsScriptUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",

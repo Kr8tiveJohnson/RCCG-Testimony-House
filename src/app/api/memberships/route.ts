@@ -1,13 +1,9 @@
 import { NextResponse } from "next/server";
+import { googleAppsScriptUrl } from "../../../lib/google-sheets";
 
 export async function GET(request: Request) {
-	const scriptUrl = process.env.NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL || process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL;
-	if (!scriptUrl) {
-		return NextResponse.json({ success: false, error: "Google Sheet integration is not configured." }, { status: 503 });
-	}
-
 	try {
-		const upstreamUrl = new URL(scriptUrl);
+		const upstreamUrl = new URL(googleAppsScriptUrl);
 		const requestUrl = new URL(request.url);
 		for (const key of ["status", "from", "to"]) {
 			const value = requestUrl.searchParams.get(key);
