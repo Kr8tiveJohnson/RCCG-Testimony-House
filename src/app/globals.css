@@ -362,16 +362,12 @@ body:has(.home-hero) .site-header { color: #fff; background: rgba(9,10,16,.2); }
 .livestream-page__heading h1 { margin: 0; font-family: var(--font-display); font-size: clamp(42px,6vw,72px); font-weight: 800; letter-spacing: -.075em; line-height: 1; }
 .livestream-page__heading h1 em { color: var(--purple); font-style: normal; }
 .livestream-page__heading > p:last-child { margin: 15px 0 0; color: var(--muted); font-size: 12px; }
-.livestream-player { overflow: hidden; border: 1px solid rgba(72,70,165,.2); background: #16172d; box-shadow: 0 18px 50px rgba(30,29,76,.12); }
-.livestream-player__screen { position: relative; display: grid; min-height: 420px; place-items: center; overflow: hidden; color: white; background: radial-gradient(ellipse at 50% 28%,rgba(116,104,191,.3),transparent 41%),linear-gradient(145deg,#20223d,#131427 64%,#272344); }
-.livestream-player__screen::before, .livestream-player__screen::after { position: absolute; width: 350px; height: 350px; border: 1px solid rgba(255,255,255,.08); border-radius: 50%; content: ''; }
-.livestream-player__screen::before { box-shadow: 0 0 0 35px rgba(255,255,255,.025),0 0 0 72px rgba(255,255,255,.018); }.livestream-player__screen::after { width: 240px; height: 240px; border-color: rgba(255,225,142,.16); }
-.livestream-player__status { position: absolute; top: 20px; left: 20px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 11px; border: 1px solid rgba(255,255,255,.18); color: rgba(255,255,255,.76); font-size: 8px; font-weight: 800; letter-spacing: .13em; }
-.livestream-player__status span { width: 7px; height: 7px; border-radius: 50%; background: #9da1a9; }
-.livestream-player__message { position: relative; z-index: 1; max-width: 440px; padding: 30px; text-align: center; }.livestream-player__message > svg { color: #c9c5ff; }
-.livestream-player__message h2 { margin: 16px 0 7px; font-family: var(--font-display); font-size: 23px; letter-spacing: -.04em; }.livestream-player__message p { margin: 0; color: rgba(255,255,255,.65); font-size: 11px; line-height: 1.7; }
-.livestream-player__watermark { position: absolute; right: 18px; bottom: 16px; color: rgba(255,255,255,.36); font-size: 7px; font-weight: 800; letter-spacing: .16em; }
-.livestream-player__footer { display: flex; justify-content: space-between; gap: 15px; padding: 14px 18px; color: rgba(255,255,255,.65); font-size: 8px; }.livestream-player__footer span:first-child { color: #c9c5ff; font-weight: 800; letter-spacing: .14em; }
+.livestream-player { overflow: hidden; border: 1px solid rgba(72,70,165,.2); background: #101114; box-shadow: 0 18px 50px rgba(30,29,76,.12); }
+.livestream-player__screen { position: relative; overflow: hidden; aspect-ratio: 16 / 9; background: #090a0c; }
+.livestream-player__embed { position: absolute; inset: 0; display: block; width: 100%; height: 100%; border: 0; }
+.livestream-player__status { position: absolute; z-index: 1; top: 16px; left: 16px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 11px; border: 1px solid rgba(255,255,255,.24); color: #fff; background: rgba(15,17,20,.76); font-size: 8px; font-weight: 800; letter-spacing: .13em; }
+.livestream-player__status span { width: 7px; height: 7px; border-radius: 50%; background: #e31e24; box-shadow: 0 0 0 3px rgba(227,30,36,.18); }
+.livestream-player__footer { display: flex; justify-content: space-between; gap: 15px; padding: 14px 18px; color: rgba(255,255,255,.65); font-size: 8px; }.livestream-player__footer span:first-child { color: #fff; font-weight: 800; letter-spacing: .14em; }
 .livestream-page__actions { display: flex; align-items: center; gap: 24px; margin-top: 25px; }
 
 .reveal { transform: translateY(28px); opacity: 0; transition: transform .75s cubic-bezier(.2,.75,.24,1), opacity .75s ease; }.reveal--visible { transform: translateY(0); opacity: 1; }
@@ -466,7 +462,7 @@ body:has(.home-hero) .site-header { color: #fff; background: rgba(9,10,16,.2); }
   .events-section__top { align-items: flex-start; flex-direction: column; gap: 17px; margin-bottom: 21px; }.event-row { grid-template-columns: 58px 1fr; gap: 13px; padding: 13px; }.event-row__date { min-height: 69px; }.event-row__date svg { width: 20px; }.event-row__date span { font-size: 6px; }.event-row__copy h3 { font-size: 15px; }.event-row__copy p { font-size: 8px; }.event-row > .round-arrow { grid-column: 2; justify-self: end; width: 36px; height: 36px; }
   .site-footer__main { grid-template-columns: minmax(0, 1fr); gap: 22px; padding-block: 22px 18px; }.site-footer__brand-block, .site-footer__connect { grid-column: 1; min-width: 0; }.site-footer__logo { width: 130px; }.footer-label { margin-bottom: 14px; }.site-footer__bottom { min-height: 57px; gap: 10px; font-size: 8px; }.site-footer__bottom span:last-child { text-align: left; }
   .coming-soon { min-height: 65vh; padding-top: 120px; }
-  .livestream-page { padding-block: 112px 60px; }.livestream-page__back { margin-bottom: 27px; }.livestream-player__screen { min-height: 290px; }.livestream-player__status { top: 12px; left: 12px; }.livestream-player__footer { flex-direction: column; gap: 5px; }
+  .livestream-page { padding-block: 112px 60px; }.livestream-page__back { margin-bottom: 27px; }.livestream-player__status { top: 10px; left: 10px; }.livestream-player__footer { flex-direction: column; gap: 5px; }
   .registration-page { padding: 105px 0 55px; background: linear-gradient(180deg,#071d58 0 470px,#fff 470px 100%); }.registration-page__inner { grid-template-columns: 1fr; gap: 30px; }.registration-intro { padding: 0; }.registration-back { margin-bottom: 23px; }.registration-intro__icon { width: 42px; height: 42px; margin-bottom: 19px; }.registration-intro h1 { font-size: 49px; }.registration-intro__description { margin-top: 14px; font-size: 11px; }.registration-note { margin-top: 18px; padding-top: 13px; }.registration-form-panel { padding: 23px 17px 19px; }.registration-form-panel__heading h2 { font-size: 25px; }.registration-form__row, .registration-form__row--three { grid-template-columns: 1fr; gap: 15px; }.membership-check-group { padding: 13px 10px; }.membership-check-group__options { grid-template-columns: 1fr; gap: 9px; }.membership-check--other { grid-column: 1; flex-wrap: wrap; }
 }
 
