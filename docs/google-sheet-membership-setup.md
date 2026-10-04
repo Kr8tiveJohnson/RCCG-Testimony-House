@@ -53,6 +53,10 @@ Then restart the app with:
 npm run dev
 ```
 
+## YouTube livestream status
+
+The livestream status badge uses the YouTube Data API. Set `YOUTUBE_API_KEY` as a server-side Secret in Vercel (and in `.env.local` for local development). Restrict the key to YouTube Data API v3; do not add it to client-side variables or commit its value.
+
 ## Notes
 
 - The form will keep working in preview mode if the URL is not set.

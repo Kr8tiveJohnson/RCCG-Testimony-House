@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, ArrowUpRight, Radio } from "lucide-react";
+import { LivestreamStatus } from "../../components/livestream-status";
 
 const livestreamUrl = "https://www.youtube.com/live/WwGdulhLa1w?si=39xplUR3w7h7DDJY";
 const livestreamEmbedUrl = "https://www.youtube.com/embed/WwGdulhLa1w";
@@ -30,7 +31,7 @@ export default function LivestreamPage() {
               referrerPolicy="strict-origin-when-cross-origin"
               allowFullScreen
             />
-            <div className="livestream-player__status"><span /> LIVE NOW</div>
+            <LivestreamStatus />
           </div>
           <div className="livestream-player__footer"><span>LIVE STREAM</span><span>Streaming from RCCG Testimony House</span></div>
         </div>
