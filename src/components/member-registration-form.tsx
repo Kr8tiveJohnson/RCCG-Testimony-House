@@ -1,10 +1,12 @@
 "use client";
 
-import { ArrowRight, CheckCircle2, CircleAlert } from "lucide-react";
+import { ArrowRight, CheckCircle2, CircleAlert, X } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
 const titles = ["Arch", "Ast. Pst", "Barr", "Dcn", "Dcns", "Dr", "Engr", "Evang", "Miss", "Mr", "Mrs", "Prof", "Pst", "Rev'd"];
 const years = Array.from({ length: new Date().getFullYear() - 1994 + 1 }, (_, index) => String(1994 + index));
+const birthMonths = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const birthDays = Array.from({ length: 31 }, (_, index) => String(index + 1));
 const qualifications = ["First School Leaving Cert", "SSCE", "NCE", "OND", "HND", "Bachelors", "Masters", "Doctorate", "Other"];
 const programmes = [
   "Prayer Programmes", "Prayer School", "Praise Programmes", "Women's Programmes", "Men's Programmes",
@@ -60,8 +62,10 @@ function CheckGroup({ name, title, options, required = false, invalid = false }:
 export function MemberRegistrationForm() {
   const [status, setStatus] = useState<{ type: "error" | "info"; message: string } | null>(null);
   const [invalidGroup, setInvalidGroup] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const googleSheetUrl = process.env.NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL || process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL;
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
     const requiredGroups = Array.from(form.querySelectorAll<HTMLElement>("[data-required-group]"));
@@ -79,6 +83,49 @@ export function MemberRegistrationForm() {
       setStatus({ type: "error", message: "The photograph must be no larger than 1 MB." });
       photo.focus();
       return;
+    }
+
+    if (googleSheetUrl) {
+      const formData = new FormData(form);
+      formData.delete("photograph");
+      const submissionData = new URLSearchParams();
+      formData.forEach((value, key) => {
+        if (typeof value === "string") submissionData.append(key, value);
+      });
+
+      try {
+        setStatus({ type: "info", message: "Submitting your details to the church database..." });
+
+        const response = await fetch(googleSheetUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+          },
+          body: submissionData.toString(),
+        });
+
+        const resultText = await response.text();
+        let result: { success?: boolean; error?: string } = {};
+
+        try {
+          result = JSON.parse(resultText);
+        } catch {
+          result = {};
+        }
+
+        if (!response.ok || result.success === false) {
+          throw new Error(result.error || "Submission failed.");
+        }
+
+        setStatus({ type: "info", message: "Your membership details have been submitted successfully. The church team will review them soon." });
+        setShowSuccessModal(true);
+        form.reset();
+        return;
+      } catch (error) {
+        console.error(error);
+        setStatus({ type: "error", message: "We could not save your details to the Google Sheet. Please try again or contact the church." });
+        return;
+      }
     }
 
     setStatus({ type: "info", message: "This membership form is a preview only. Your information and photo have not been sent or saved." });
@@ -110,10 +157,12 @@ export function MemberRegistrationForm() {
         <label>Gender <span>*</span><select name="gender" defaultValue="" required><option value="" disabled>Choose</option><option>Male</option><option>Female</option></select></label>
       </div>
       <div className="registration-form__row">
-        <label>Birth date <span>*</span><input name="birthDate" type="date" autoComplete="bday" required /></label>
+        <label>Birth month <span>*</span><select name="birthMonth" defaultValue="" required><option value="" disabled>Month</option>{birthMonths.map((month) => <option key={month}>{month}</option>)}</select></label>
+        <label>Birth day <span>*</span><select name="birthDay" defaultValue="" required><option value="" disabled>Day</option>{birthDays.map((day) => <option key={day}>{day}</option>)}</select></label>
         <label>Marital status <span>*</span><select name="maritalStatus" defaultValue="" required><option value="" disabled>Choose</option><option>Single</option><option>Married</option><option>Divorced</option><option>Separated</option><option>Widowed</option></select></label>
       </div>
       <label>Residential address <span>*</span><input name="address" type="text" autoComplete="street-address" required /></label>
+      <label>Nearest bus stop <span>*</span><input name="nearestBustop" type="text" required /></label>
       <div className="registration-form__row">
         <label>Email address <span className="registration-form__optional">OPTIONAL</span><input name="email" type="email" autoComplete="email" /></label>
         <label>Telephone / WhatsApp number <span>*</span><input name="phone" type="tel" autoComplete="tel" required /></label>
@@ -141,6 +190,21 @@ export function MemberRegistrationForm() {
       <label className="registration-form__consent"><input name="consent" type="checkbox" required /><span>I consent to RCCG Testimony House using the information I provide for church administration, programme planning, and follow-up. I understand it will be treated confidentially. <b>*</b></span></label>
       <button className="button button--coral registration-form__submit" type="submit">Submit membership form <ArrowRight size={16} /></button>
       {status ? <p className={`registration-form__status registration-form__status--${status.type}`} role={status.type === "error" ? "alert" : "status"}>{status.type === "error" ? <CircleAlert size={18} /> : <CheckCircle2 size={18} />} {status.message}</p> : null}
+
+      {showSuccessModal ? (
+        <div className="registration-success-modal" role="dialog" aria-modal="true" aria-labelledby="membership-success-title">
+          <div className="registration-success-modal__backdrop" onClick={() => setShowSuccessModal(false)} />
+          <div className="registration-success-modal__card">
+            <button type="button" className="registration-success-modal__close" aria-label="Close success message" onClick={() => setShowSuccessModal(false)}>
+              <X size={16} />
+            </button>
+            <div className="registration-success-modal__icon"><CheckCircle2 size={34} /></div>
+            <h3 id="membership-success-title">Successfully submitted</h3>
+            <p>Your membership form has been received. The church team will review it soon.</p>
+            <button type="button" className="button button--dark registration-success-modal__button" onClick={() => setShowSuccessModal(false)}>Close</button>
+          </div>
+        </div>
+      ) : null}
     </form>
   );
 }

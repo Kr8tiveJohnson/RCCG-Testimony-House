@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import {
 	Activity,
 	ArrowDownRight,
@@ -20,6 +20,7 @@ const sections = [
 	{ id: "pages", label: "Page content", icon: FileText },
 	{ id: "services", label: "Sunday services", icon: Clock3 },
 	{ id: "ministries", label: "Ministries & events", icon: UsersRound },
+	{ id: "memberships", label: "Memberships", icon: UsersRound },
 	{ id: "analytics", label: "Analytics", icon: ChartNoAxesCombined },
 ] as const;
 
@@ -44,6 +45,17 @@ type Draft = {
 	eventTitle: string;
 	eventDescription: string;
 	ministrySummary: string;
+};
+
+type MembershipEntry = {
+	"Submitted At"?: string | Date;
+	Status?: string;
+	"First Name"?: string;
+	"Surname"?: string;
+	"Email Address"?: string;
+	"Telephone / WhatsApp"?: string;
+	"Residential Address"?: string;
+	Category?: string;
 };
 
 const initialDraft: Draft = {
@@ -85,6 +97,44 @@ export function AdminDashboard() {
 	const [timeRange, setTimeRange] = useState("7 days");
 	const [draft, setDraft] = useState(initialDraft);
 	const [notice, setNotice] = useState("");
+	const [membershipRows, setMembershipRows] = useState<MembershipEntry[]>([]);
+	const [membershipStatus, setMembershipStatus] = useState("All");
+	const [membershipFrom, setMembershipFrom] = useState("");
+	const [membershipTo, setMembershipTo] = useState("");
+	const [membershipLoading, setMembershipLoading] = useState(false);
+	const [membershipError, setMembershipError] = useState("");
+
+	const loadMembershipRows = useCallback(async () => {
+		setMembershipLoading(true);
+		setMembershipError("");
+
+		const params = new URLSearchParams();
+		if (membershipStatus && membershipStatus !== "All") params.set("status", membershipStatus);
+		if (membershipFrom) params.set("from", membershipFrom);
+		if (membershipTo) params.set("to", membershipTo);
+
+		try {
+			const response = await fetch(`/api/memberships?${params.toString()}`);
+			const result = await response.json() as { success?: boolean; entries?: MembershipEntry[]; error?: string };
+			if (!response.ok || result.success === false) throw new Error(result.error || "Unable to load membership data.");
+
+			setMembershipRows(Array.isArray(result.entries) ? result.entries : []);
+		} catch (error) {
+			setMembershipRows([]);
+			setMembershipError(error instanceof Error ? error.message : "Could not load membership entries from the Google Sheet right now.");
+		} finally {
+			setMembershipLoading(false);
+		}
+	}, [membershipFrom, membershipStatus, membershipTo]);
+
+	useEffect(() => {
+		if (activeSection !== "memberships") return;
+		const timeoutId = window.setTimeout(() => {
+			void loadMembershipRows();
+		}, 0);
+
+		return () => window.clearTimeout(timeoutId);
+	}, [activeSection, loadMembershipRows]);
 
 	function updateDraft(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
 		const { name, value } = event.currentTarget;
@@ -151,6 +201,56 @@ export function AdminDashboard() {
 								</div>
 							</div>
 							<p className="admin-disclaimer">This preview is not connected to Google Analytics or any visitor tracking service.</p>
+						</div>
+					) : activeSection === "memberships" ? (
+						<div className="admin-panel admin-panel--wide">
+							<div className="admin-panel__heading"><div><p className="section-kicker">MEMBERSHIP DATA</p><h2>Submissions</h2></div><button type="button" className="admin-button" onClick={() => { setMembershipStatus("All"); setMembershipFrom(""); setMembershipTo(""); }}><CalendarDays size={15} /> Reset filters</button></div>
+							<div className="admin-membership-filters">
+								<label>
+									Status
+									<select value={membershipStatus} onChange={(event) => setMembershipStatus(event.target.value)}>
+										<option>All</option>
+										<option>New</option>
+										<option>Review</option>
+										<option>Approved</option>
+										<option>Rejected</option>
+									</select>
+								</label>
+								<label>Date from<input type="date" value={membershipFrom} onChange={(event) => setMembershipFrom(event.target.value)} /></label>
+								<label>Date to<input type="date" value={membershipTo} onChange={(event) => setMembershipTo(event.target.value)} /></label>
+							</div>
+							{membershipLoading ? <p className="admin-notice" role="status">Loading membership entries...</p> : null}
+							{membershipError ? <p className="admin-notice admin-notice--error" role="alert">{membershipError}</p> : null}
+							{!membershipLoading && !membershipError ? (
+								<div className="admin-table-wrap">
+									<table className="admin-membership-table">
+										<thead>
+											<tr>
+												<th>Date submitted</th>
+												<th>Status</th>
+												<th>Name</th>
+												<th>Category</th>
+												<th>Phone</th>
+												<th>Email</th>
+											</tr>
+										</thead>
+										<tbody>
+											{membershipRows.length ? membershipRows.map((entry, index) => (
+												<tr key={`${entry["Submitted At"] ?? index}-${index}`}>
+													<td>{entry["Submitted At"] ? new Date(String(entry["Submitted At"])).toLocaleString() : "—"}</td>
+													<td><span className={`admin-membership-status admin-membership-status--${String(entry.Status || "New").toLowerCase()}`}>{entry.Status || "New"}</span></td>
+													<td>{[entry["First Name"], entry["Surname"]].filter(Boolean).join(" ") || "—"}</td>
+													<td>{entry.Category || "—"}</td>
+													<td>{entry["Telephone / WhatsApp"] || "—"}</td>
+													<td>{entry["Email Address"] || "—"}</td>
+												</tr>
+											)) : (
+												<tr><td colSpan={6}>No membership entries match the selected filter.</td></tr>
+											)}
+										</tbody>
+									</table>
+								</div>
+							) : null}
 						</div>
 					) : (
 						<form className="admin-panel admin-editor" onSubmit={showPreviewNotice}>

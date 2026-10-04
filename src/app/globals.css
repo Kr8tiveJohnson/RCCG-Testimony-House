@@ -562,6 +562,14 @@ body:has(.home-hero) .site-header { color: #fff; background: rgba(9,10,16,.2); }
 .registration-form__status--error svg { color: var(--brand-red); }
 .registration-form__status--info { border-color: rgba(7,132,59,.22); color: #14552f; background: #eff9f1; }
 .registration-form__status--info svg { color: var(--brand-green); }
+.registration-success-modal { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 20px; }
+.registration-success-modal__backdrop { position: absolute; inset: 0; background: rgba(7,12,24,.42); backdrop-filter: blur(2px); }
+.registration-success-modal__card { position: relative; z-index: 1; width: min(440px, 100%); padding: 30px 24px 22px; border: 1px solid rgba(16,24,32,.08); border-radius: 16px; background: #fff; box-shadow: 0 28px 60px rgba(14,22,39,.2); text-align: center; }
+.registration-success-modal__icon { display: grid; width: 68px; height: 68px; margin: 0 auto 18px; place-items: center; border-radius: 50%; background: rgba(17,128,74,.1); color: var(--brand-green); }
+.registration-success-modal__card h3 { margin: 0; color: var(--ink); font-family: var(--font-display); font-size: clamp(26px, 3vw, 32px); letter-spacing: -.045em; }
+.registration-success-modal__card p { margin: 12px auto 0; max-width: 300px; color: var(--muted); font-size: 11px; line-height: 1.7; }
+.registration-success-modal__button { margin-top: 22px; }
+.registration-success-modal__close { position: absolute; top: 14px; right: 14px; display: grid; width: 32px; height: 32px; place-items: center; border: 0; border-radius: 50%; background: #f4f4f8; color: var(--ink); cursor: pointer; }
 .membership-check-group[data-invalid="true"] { border-color: var(--brand-red); background: #fff7f7; box-shadow: 0 0 0 2px rgba(227,30,36,.08); }
 
 .not-found-page { display: grid; min-height: 66svh; align-content: center; padding-block: 145px 80px; }
@@ -644,12 +652,29 @@ body:has(.home-hero) .site-header { color: #fff; background: rgba(9,10,16,.2); }
 .admin-editor textarea { resize: vertical; line-height: 1.55; }
 .admin-editor__row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .admin-notice { margin: 0; padding: 11px 12px; border: 1px solid rgba(7,132,59,.2); border-radius: 4px; color: #14552f; background: #eff9f1; font-size: 10px; }
+.admin-notice--error { border-color: rgba(227,30,36,.2); color: #8d2024; background: #fff4f4; }
+.admin-panel--wide { overflow: hidden; }
+.admin-membership-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+.admin-membership-filters label { display: grid; gap: 6px; color: #536173; font-size: 10px; font-weight: 700; }
+.admin-membership-filters select, .admin-membership-filters input { width: 100%; min-width: 0; padding: 10px 11px; border: 1px solid #d7e0ea; border-radius: 4px; color: #182a40; background: #fff; font: inherit; font-size: 11px; }
+.admin-table-wrap { overflow-x: auto; }
+.admin-membership-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.admin-membership-table th, .admin-membership-table td { padding: 10px 12px; border-bottom: 1px solid #edf1f5; text-align: left; vertical-align: top; }
+.admin-membership-table th { color: #536173; font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.admin-membership-table td { color: #233349; }
+.admin-membership-status { display: inline-flex; align-items: center; min-height: 24px; padding: 4px 8px; border-radius: 999px; font-size: 9px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.admin-membership-status--new { background: #e6f2ff; color: #0d4eb0; }
+.admin-membership-status--review { background: #fdf4d8; color: #8b6b10; }
+.admin-membership-status--approved { background: #eafaf0; color: #0f6f42; }
+.admin-membership-status--rejected { background: #fde9ea; color: #a62a32; }
 
 @media (max-width: 900px) {
   .admin-page { padding-top: 112px; }
   .admin-layout { grid-template-columns: 1fr; gap: 14px; }
   .admin-nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .admin-nav__item { justify-content: center; flex-direction: column; gap: 6px; min-height: 58px; padding: 8px 5px; text-align: center; }
+
+ .admin-membership-filters { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 640px) {
