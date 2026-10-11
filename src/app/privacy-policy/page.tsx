@@ -21,9 +21,12 @@ export default function PrivacyPolicyPage() {
 			<h2>Hosting and external links</h2>
 			<p>The website hosting provider may process basic technical information, such as server logs, to deliver and protect the site. Links to social media and other third-party services are governed by those services’ own privacy notices.</p>
 
+			<h2>Optional church notifications</h2>
+			<p>If you choose to enable browser notifications, the website stores your browser’s push subscription in its PostgreSQL database so it can send new-sermon announcements and event reminders. The subscription does not include your name or email address. You can turn notifications off from the website or your browser’s notification settings. Notifications require your permission and may not be available on every browser or device.</p>
+
 			<h2>How to contact us</h2>
 			<p>For privacy questions, email <a href="mailto:rccglp103@gmail.com">rccglp103@gmail.com</a> or use our <Link href="/contact">contact page</Link>.</p>
-			<p>This policy will be updated before the website begins collecting or storing information through online forms.</p>
+			<p>This policy will be updated if the website’s information practices change.</p>
 		</article>
 	);
 }

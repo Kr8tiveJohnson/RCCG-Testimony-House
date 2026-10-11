@@ -1,4 +1,5 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { AppPrompt } from "../components/app-prompt";
 import { SiteFooter } from "../components/site-footer";
 import { SiteHeader } from "../components/site-header";
 import "./globals.css";
@@ -11,6 +12,12 @@ export const metadata: Metadata = {
 	},
 	description:
 		"Welcome to RCCG Testimony House. Find a church family, grow in faith, and discover the next step in your journey.",
+	manifest: "/manifest.webmanifest",
+	appleWebApp: {
+		capable: true,
+		title: "Testimony House",
+		statusBarStyle: "default",
+	},
 	openGraph: {
 		type: "website",
 		locale: "en_NG",
@@ -27,10 +34,17 @@ export const metadata: Metadata = {
 		images: ["/images/welcome%20to%20church.jpg"],
 	},
 	icons: {
-		icon: "/images/logo/TESTIMONY LOGO.png",
-		shortcut: "/images/logo/TESTIMONY LOGO.png",
-		apple: "/images/logo/TESTIMONY LOGO.png",
+		icon: [
+			{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+			{ url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+		],
+		shortcut: "/icons/icon-192.png",
+		apple: "/icons/icon-180.png",
 	},
+};
+
+export const viewport: Viewport = {
+	themeColor: "#071d58",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -40,6 +54,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
 				<SiteHeader />
 				<main>{children}</main>
 				<SiteFooter />
+				<AppPrompt />
 			</body>
 		</html>
 	);

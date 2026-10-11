@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
+import { getLivestreamSettings } from "../../../lib/livestream-store";
+import { getYouTubeVideoId } from "../../../lib/livestream";
 
 export const revalidate = 60;
-
-const videoId = "WwGdulhLa1w";
 
 type YouTubeVideo = {
 	snippet?: { liveBroadcastContent?: string };
@@ -20,6 +20,10 @@ export async function GET() {
 	}
 
 	try {
+		const settings = await getLivestreamSettings();
+		const videoId = settings.platform === "youtube" ? getYouTubeVideoId(settings.url) : null;
+		if (!videoId) return NextResponse.json({ success: true, status: "unknown" });
+
 		const url = new URL("https://www.googleapis.com/youtube/v3/videos");
 		url.searchParams.set("part", "snippet,liveStreamingDetails");
 		url.searchParams.set("id", videoId);

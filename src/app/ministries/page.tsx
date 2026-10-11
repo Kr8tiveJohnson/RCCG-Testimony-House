@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowUpRight, Home } from "lucide-react";
-import { ministries } from "../../data/site-content";
+import { getWebsiteContent, getMinistryIcon } from "../../lib/website-content";
 
 export const metadata: Metadata = {
 	title: "Church ministries",
 	description: "Explore children, youth, young adult, music, outreach, and other ministries at RCCG Testimony House.",
 };
 
-export default function MinistriesPage() {
+export const dynamic = "force-dynamic";
+
+export default async function MinistriesPage() {
+	const { ministries } = await getWebsiteContent();
 	return (
 		<section className="ministries-page page-width">
 			<div className="ministry-detail__actions ministries-page__actions">
@@ -25,12 +28,13 @@ export default function MinistriesPage() {
 
 			<div className="ministry-tiles">
 				{ministries.map((ministry, index) => {
+					const Icon = getMinistryIcon(ministry.slug);
 					const artStyle = ministry.image ? ({ ["--tile-image" as string]: `url(${ministry.image})` } as const) : undefined;
 
 					return (
 						<Link key={ministry.slug} href={`/ministries/${ministry.slug}`} className="ministry-tile__link">
 							<div className="ministry-tile__art" style={artStyle}>
-								<span>{String(index + 1).padStart(2, "0")}</span>
+								<span>{String(index + 1).padStart(2, "0")}</span><Icon size={27} strokeWidth={1.5} />
 							</div>
 							<div className="ministry-tile__bottom">
 								<div>

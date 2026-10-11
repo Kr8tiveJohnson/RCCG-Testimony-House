@@ -2,10 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Home } from "lucide-react";
 import { notFound } from "next/navigation";
-import { ministries } from "../../../data/site-content";
+import { getWebsiteContent } from "../../../lib/website-content";
+
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
 	const { slug } = await params;
+	const { ministries } = await getWebsiteContent();
 	const ministry = ministries.find((item) => item.slug === slug);
 
 	return {
@@ -18,6 +21,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function MinistryDetailPage({ params }: { params: Promise<{ slug: string }> }) {
 	const { slug } = await params;
+	const { ministries } = await getWebsiteContent();
 	const ministry = ministries.find((item) => item.slug === slug);
 
 	if (!ministry) {

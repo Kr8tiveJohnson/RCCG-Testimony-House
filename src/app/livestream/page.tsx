@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, ArrowUpRight, Radio } from "lucide-react";
-import { LivestreamStatus } from "../../components/livestream-status";
-
-const livestreamUrl = "https://www.youtube.com/live/WwGdulhLa1w?si=39xplUR3w7h7DDJY";
-const livestreamEmbedUrl = "https://www.youtube.com/embed/WwGdulhLa1w";
+import { LivestreamPlayer } from "../../components/livestream-player";
 
 export const metadata: Metadata = {
   title: "Watch live",
@@ -19,24 +16,10 @@ export default function LivestreamPage() {
         <div className="livestream-page__heading">
           <p className="section-kicker"><Radio size={14} /> TESTIMONY HOUSE ONLINE</p>
           <h1>Join us<br /><em>live.</em></h1>
-          <p>Watch the RCCG Testimony House service live below.</p>
+          <p>Watch the RCCG Testimony House service live below on YouTube or Facebook.</p>
         </div>
-        <div className="livestream-player">
-          <div className="livestream-player__screen">
-            <iframe
-              className="livestream-player__embed"
-              src={livestreamEmbedUrl}
-              title="RCCG Testimony House live stream"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              referrerPolicy="strict-origin-when-cross-origin"
-              allowFullScreen
-            />
-            <LivestreamStatus />
-          </div>
-          <div className="livestream-player__footer"><span>LIVE STREAM</span><span>Streaming from RCCG Testimony House</span></div>
-        </div>
-        <div className="livestream-page__actions">
-          <a className="pill-button pill-button--purple" href={livestreamUrl} target="_blank" rel="noreferrer">Watch on YouTube <span><ArrowUpRight size={17} /></span></a>
+        <LivestreamPlayer />
+        <div className="livestream-page__actions livestream-page__actions--secondary">
           <Link className="text-arrow" href="/sermons">Browse sermons <ArrowUpRight size={16} /></Link>
           <Link className="text-arrow" href="/contact">Service information <ArrowUpRight size={16} /></Link>
         </div>

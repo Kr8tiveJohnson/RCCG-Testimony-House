@@ -1,6 +1,6 @@
 # Google Sheet database setup for the membership form
 
-This project can now send each membership submission to a Google Sheet when `NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL` is configured.
+This project sends membership submissions to Google Sheets when `NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL` is configured. Google Sheets is used only for membership records; website livestream settings are stored separately in PostgreSQL.
 
 ## 1) Create the Google Sheet
 
@@ -57,8 +57,13 @@ npm run dev
 
 The livestream status badge uses the YouTube Data API. Set `YOUTUBE_API_KEY` as a server-side Secret in Vercel (and in `.env.local` for local development). Restrict the key to YouTube Data API v3; do not add it to client-side variables or commit its value.
 
+## Website data
+
+PostgreSQL stores the website's livestream settings. See [the PostgreSQL setup guide](./postgresql-setup.md) for local and deployment configuration. The `/admin` page still requires `LIVESTREAM_ADMIN_PASSWORD`; livestream writes no longer use a Google Sheets token.
+
+When updating the Apps Script, use the latest `google-apps-script-membership.gs` and redeploy the web app with **Deploy > Manage deployments > Edit > New version > Deploy**. That script handles membership records only.
+
 ## Notes
 
-- The form will keep working in preview mode if the URL is not set.
-- This is a simple starter database for membership submissions.
-- A larger website-wide database can be added later with a more structured backend and admin dashboard.
+- Membership submissions require a working Apps Script URL.
+- The Apps Script creates the `Membership Registrations` sheet and stores membership rows there.

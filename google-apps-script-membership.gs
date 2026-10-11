@@ -130,10 +130,10 @@ function doGet(e) {
 }
 
 function doPost(e) {
+  const params = e && e.parameter ? e.parameter : {};
   try {
     const sheet = getMembershipSheet();
 
-    const params = e && e.parameter ? e.parameter : {};
     const entry = {
       "Submitted At": new Date(),
       Status: "New",

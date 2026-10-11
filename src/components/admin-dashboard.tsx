@@ -1,51 +1,42 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import {
-	Activity,
-	ArrowDownRight,
-	ArrowUpRight,
 	BookOpen,
+	Bell,
 	CalendarDays,
-	ChartNoAxesCombined,
 	Church,
 	Clock3,
 	FileText,
+	ImagePlus,
+	LogOut,
+	Radio,
 	Save,
 	UsersRound,
 } from "lucide-react";
+import {
+	DEFAULT_LIVESTREAM_SETTINGS,
+	type LivestreamSettings,
+} from "../lib/livestream";
+import {
+	DEFAULT_WEBSITE_CONTENT,
+	type SermonContent,
+	type WebsiteContent,
+} from "../lib/website-content-model";
 
 const sections = [
 	{ id: "overview", label: "Overview", icon: Church },
+	{ id: "livestream", label: "Livestream", icon: Radio },
 	{ id: "pages", label: "Page content", icon: FileText },
 	{ id: "services", label: "Sunday services", icon: Clock3 },
-	{ id: "ministries", label: "Ministries & events", icon: UsersRound },
+	{ id: "sermons", label: "Sermons", icon: BookOpen },
+	{ id: "events", label: "Event", icon: CalendarDays },
+	{ id: "notifications", label: "Notifications", icon: Bell },
 	{ id: "memberships", label: "Memberships", icon: UsersRound },
-	{ id: "analytics", label: "Analytics", icon: ChartNoAxesCombined },
 ] as const;
 
 type SectionId = (typeof sections)[number]["id"];
-type Draft = {
-	homeHeading: string;
-	homeDescription: string;
-	aboutText: string;
-	primaryCta: string;
-	sermonDescription: string;
-	testimonyDescription: string;
-	prayerDescription: string;
-	givingDescription: string;
-	livestreamDescription: string;
-	privacySummary: string;
-	contactEmail: string;
-	contactPhone: string;
-	prayerTime: string;
-	schoolTime: string;
-	serviceTime: string;
-	serviceAddress: string;
-	eventTitle: string;
-	eventDescription: string;
-	ministrySummary: string;
-};
 
 type MembershipEntry = {
 	"Submitted At"?: string | Date;
@@ -58,51 +49,56 @@ type MembershipEntry = {
 	Category?: string;
 };
 
-const initialDraft: Draft = {
-	homeHeading: "WELCOME TO TESTIMONY HOUSE",
-	homeDescription: "A welcoming church family where faith grows, hope is renewed, and every story matters.",
-	aboutText: "A church family learning to follow Jesus, care for one another, and make room for every generation to grow.",
-	primaryCta: "Membership form",
-	sermonDescription: "Sermons and teaching from RCCG Testimony House.",
-	testimonyDescription: "Stories of faith, hope, and new beginnings from our church family.",
-	prayerDescription: "A private place to share a prayer request with the church.",
-	givingDescription: "Giving information for supporting the work of the church.",
-	livestreamDescription: "Watch RCCG Testimony House services online.",
-	privacySummary: "How the church handles information shared through this website.",
-	contactEmail: "rccglp103@gmail.com",
-	contactPhone: "0706 715 6156",
-	prayerTime: "7:00 AM",
-	schoolTime: "8:00 AM",
-	serviceTime: "9:00 AM",
-	serviceAddress: "11, Odu-Onikosi Avenue, Opposite Lasued, Otto-Awori, Lagos.",
-	eventTitle: "There’s always room at the table.",
-	eventDescription: "Upcoming gatherings and event details will be shared here.",
-	ministrySummary: "Children; Teens & Youth; Young Adults; Men & Women; Choir & Music; Evangelism & Media",
+type PushSubscriptionEntry = {
+	id: string;
+	createdAt: string;
+	updatedAt: string;
 };
-
-const visits = [34, 48, 41, 61, 55, 74, 63, 82, 69, 91, 78, 100];
-
-function Metric({ label, value, change, icon: Icon }: { label: string; value: string; change: string; icon: typeof Activity }) {
-	return (
-		<article className="admin-metric">
-			<div className="admin-metric__top"><span>{label}</span><Icon size={17} /></div>
-			<strong>{value}</strong>
-			<span className="admin-metric__change"><ArrowUpRight size={13} /> {change}</span>
-		</article>
-	);
-}
 
 export function AdminDashboard() {
 	const [activeSection, setActiveSection] = useState<SectionId>("overview");
-	const [timeRange, setTimeRange] = useState("7 days");
-	const [draft, setDraft] = useState(initialDraft);
+	const [content, setContent] = useState<WebsiteContent>(DEFAULT_WEBSITE_CONTENT);
 	const [notice, setNotice] = useState("");
+	const [contentLoading, setContentLoading] = useState(true);
+	const [contentSaving, setContentSaving] = useState(false);
+	const [contentError, setContentError] = useState("");
+	const [uploadingImage, setUploadingImage] = useState("");
 	const [membershipRows, setMembershipRows] = useState<MembershipEntry[]>([]);
 	const [membershipStatus, setMembershipStatus] = useState("All");
 	const [membershipFrom, setMembershipFrom] = useState("");
 	const [membershipTo, setMembershipTo] = useState("");
 	const [membershipLoading, setMembershipLoading] = useState(false);
 	const [membershipError, setMembershipError] = useState("");
+	const [livestreamSettings, setLivestreamSettings] = useState<LivestreamSettings>(DEFAULT_LIVESTREAM_SETTINGS);
+	const [livestreamLoading, setLivestreamLoading] = useState(false);
+	const [livestreamSaving, setLivestreamSaving] = useState(false);
+	const [livestreamError, setLivestreamError] = useState("");
+	const [livestreamNotice, setLivestreamNotice] = useState("");
+	const [pushSubscriptions, setPushSubscriptions] = useState<PushSubscriptionEntry[]>([]);
+	const [pushSubscriptionsLoading, setPushSubscriptionsLoading] = useState(false);
+	const [pushSubscriptionsError, setPushSubscriptionsError] = useState("");
+
+	useEffect(() => {
+		let active = true;
+		async function loadContent() {
+			setContentLoading(true);
+			setContentError("");
+			try {
+				const response = await fetch("/api/admin/site-content", { cache: "no-store" });
+				const result = await response.json() as { success?: boolean; content?: WebsiteContent; error?: string; notificationWarning?: string };
+				if (!response.ok || !result.success || !result.content) {
+					throw new Error(result.error || "Could not load saved website content.");
+				}
+				if (active) setContent(result.content);
+			} catch (error) {
+				if (active) setContentError(error instanceof Error ? error.message : "Could not load saved website content.");
+			} finally {
+				if (active) setContentLoading(false);
+			}
+		}
+		void loadContent();
+		return () => { active = false; };
+	}, []);
 
 	const loadMembershipRows = useCallback(async () => {
 		setMembershipLoading(true);
@@ -136,22 +132,226 @@ export function AdminDashboard() {
 		return () => window.clearTimeout(timeoutId);
 	}, [activeSection, loadMembershipRows]);
 
-	function updateDraft(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
-		const { name, value } = event.currentTarget;
-		setDraft((current) => ({ ...current, [name]: value }));
+	const loadPushSubscriptions = useCallback(async () => {
+		setPushSubscriptionsLoading(true);
+		setPushSubscriptionsError("");
+		try {
+			const response = await fetch("/api/admin/push-subscriptions", { cache: "no-store" });
+			const result = await response.json() as { success?: boolean; subscriptions?: PushSubscriptionEntry[]; error?: string };
+			if (!response.ok || !result.success || !Array.isArray(result.subscriptions)) {
+				throw new Error(result.error || "Could not load notification subscribers.");
+			}
+			setPushSubscriptions(result.subscriptions);
+		} catch (error) {
+			setPushSubscriptionsError(error instanceof Error ? error.message : "Could not load notification subscribers.");
+		} finally {
+			setPushSubscriptionsLoading(false);
+		}
+	}, []);
+
+	useEffect(() => {
+		if (activeSection !== "notifications") return;
+		const timeoutId = window.setTimeout(() => void loadPushSubscriptions(), 0);
+		return () => window.clearTimeout(timeoutId);
+	}, [activeSection, loadPushSubscriptions]);
+
+	useEffect(() => {
+		if (activeSection !== "livestream") return;
+		let active = true;
+
+		async function loadLivestreamSettings() {
+			setLivestreamLoading(true);
+			setLivestreamError("");
+			try {
+				const response = await fetch("/api/admin/livestream", { cache: "no-store" });
+				const result = await response.json() as { success?: boolean; settings?: LivestreamSettings; error?: string; notificationNotice?: string };
+				if (!response.ok || !result.success || !result.settings) {
+					throw new Error(result.error || "Could not load the current livestream settings.");
+				}
+				if (active) setLivestreamSettings(result.settings);
+			} catch (error) {
+				if (active) setLivestreamError(error instanceof Error ? error.message : "Could not load the current livestream settings.");
+			} finally {
+				if (active) setLivestreamLoading(false);
+			}
+		}
+
+		void loadLivestreamSettings();
+		return () => {
+			active = false;
+		};
+	}, [activeSection]);
+
+	function updatePageContent(name: keyof WebsiteContent["pages"], value: string) {
+		setContent((current) => ({ ...current, pages: { ...current.pages, [name]: value } }));
 		setNotice("");
 	}
 
-	function showPreviewNotice(event: FormEvent<HTMLFormElement>) {
+	function updateServiceSchedule(index: number, field: "label" | "time", value: string) {
+		setContent((current) => ({
+			...current,
+			services: {
+				...current.services,
+				schedule: current.services.schedule.map((item, itemIndex) =>
+					itemIndex === index ? { ...item, [field]: value } : item),
+			},
+		}));
+		setNotice("");
+	}
+
+	function updateEvent(index: number, field: "title" | "image" | "date" | "time" | "organizer" | "theme" | "scripture" | "caseStudy" | "featuring" | "location" | "description", value: string) {
+		setContent((current) => ({
+			...current,
+			events: current.events.map((item, itemIndex) => itemIndex === index
+				? { ...item, [field]: field === "featuring" ? value.split("\n").map((line) => line.trim()).filter(Boolean) : value }
+				: item),
+		}));
+		setNotice("");
+	}
+
+	function updateSermon(index: number, field: keyof SermonContent, value: string) {
+		setContent((current) => ({
+			...current,
+			sermons: current.sermons.map((sermon, sermonIndex) => {
+				if (sermonIndex !== index) return sermon;
+				if (field === "scriptures" || field === "points" || field === "prayerPoints") {
+					return { ...sermon, [field]: value.split("\n").map((line) => line.trim()).filter(Boolean) };
+				}
+				return { ...sermon, [field]: value };
+			}),
+		}));
+		setNotice("");
+	}
+
+	function addEvent() {
+		setContent((current) => ({
+			...current,
+			events: [...current.events, {
+				title: "",
+				date: new Date().toISOString().slice(0, 10),
+				time: "",
+				organizer: "",
+				theme: "",
+				scripture: "",
+				caseStudy: "",
+				featuring: [],
+				location: "",
+				description: "",
+			}],
+		}));
+	}
+
+	function addSermon() {
+		setContent((current) => ({
+			...current,
+			sermons: [...current.sermons, {
+				date: new Date().toISOString().slice(0, 10),
+				title: "",
+				service: "",
+				speaker: "",
+				topic: "",
+				scriptures: [],
+				summary: "",
+				points: [],
+				prayerPoints: [],
+			}],
+		}));
+	}
+
+	function removeSermon(index: number) {
+		setContent((current) => ({ ...current, sermons: current.sermons.filter((_, sermonIndex) => sermonIndex !== index) }));
+	}
+
+	function removeEvent(index: number) {
+		setContent((current) => ({ ...current, events: current.events.filter((_, itemIndex) => itemIndex !== index) }));
+	}
+
+	async function uploadImage(event: ChangeEvent<HTMLInputElement>, entryKey: string, onUploaded: (image: string) => void) {
+		const input = event.currentTarget;
+		const file = input.files?.[0];
+		if (!file) return;
+
+		setContentError("");
+		setNotice("");
+		setUploadingImage(entryKey);
+		try {
+			const formData = new FormData();
+			formData.set("image", file);
+			const response = await fetch("/api/admin/media", { method: "POST", body: formData });
+			const result = await response.json() as { success?: boolean; image?: string; error?: string };
+			if (!response.ok || !result.success || !result.image) {
+				throw new Error(result.error || "Could not upload the image.");
+			}
+			onUploaded(result.image);
+			setNotice("Image uploaded. Save and publish to display it on the website.");
+		} catch (error) {
+			setContentError(error instanceof Error ? error.message : "Could not upload the image.");
+		} finally {
+			setUploadingImage("");
+			input.value = "";
+		}
+	}
+
+	async function saveContent(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
-		setNotice("Preview only. Changes are not published or saved to the live website.");
+		setContentError("");
+		setNotice("");
+		setContentSaving(true);
+		try {
+			const response = await fetch("/api/admin/site-content", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(content),
+			});
+			const result = await response.json() as { success?: boolean; content?: WebsiteContent; error?: string; notificationWarning?: string };
+			if (!response.ok || !result.success || !result.content) {
+				throw new Error(result.error || "Could not save website content.");
+			}
+			setContent(result.content);
+			setNotice(result.notificationWarning
+				? `Saved and published. ${result.notificationWarning}`
+				: "Saved and published. The public website now displays these changes.");
+		} catch (error) {
+			setContentError(error instanceof Error ? error.message : "Could not save website content.");
+		} finally {
+			setContentSaving(false);
+		}
+	}
+
+	async function saveLivestream(event: FormEvent<HTMLFormElement>) {
+		event.preventDefault();
+		setLivestreamError("");
+		setLivestreamNotice("");
+		setLivestreamSaving(true);
+		try {
+			const response = await fetch("/api/admin/livestream", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(livestreamSettings),
+			});
+			const result = await response.json() as { success?: boolean; settings?: LivestreamSettings; error?: string; notificationNotice?: string };
+			if (!response.ok || !result.success || !result.settings) {
+				throw new Error(result.error || "Could not save the livestream settings.");
+			}
+			setLivestreamSettings(result.settings);
+			setLivestreamNotice(result.notificationNotice || "Livestream updated. The public Watch live page now uses this link.");
+		} catch (error) {
+			setLivestreamError(error instanceof Error ? error.message : "Could not save the livestream settings.");
+		} finally {
+			setLivestreamSaving(false);
+		}
+	}
+
+	async function signOut() {
+		await fetch("/api/admin/session", { method: "DELETE" });
+		window.location.reload();
 	}
 
 	return (
 		<section className="admin-page page-width">
 			<header className="admin-page__header">
 				<div><p className="section-kicker">TESTIMONY HOUSE</p><h1>Website admin</h1></div>
-				<span className="admin-prototype"><span /> PROTOTYPE</span>
+				<div className="admin-page__header-actions"><span className="admin-prototype admin-prototype--private"><span /> PRIVATE ADMIN</span><button type="button" className="admin-button" onClick={() => void signOut()}><LogOut size={14} /> Sign out</button></div>
 			</header>
 
 			<div className="admin-layout">
@@ -166,41 +366,82 @@ export function AdminDashboard() {
 				<div className="admin-workspace">
 					{activeSection === "overview" ? (
 						<div className="admin-panel">
-							<div className="admin-panel__heading"><div><p className="section-kicker">OVERVIEW</p><h2>Good morning</h2></div><button type="button" className="admin-button" onClick={() => setActiveSection("pages")}><FileText size={15} /> Edit page content</button></div>
-							<div className="admin-metrics">
-								<Metric label="Page views" value="1,284" change="12.8%" icon={Activity} />
-								<Metric label="New visitors" value="936" change="8.2%" icon={UsersRound} />
-								<Metric label="Form interest" value="42" change="5.4%" icon={FileText} />
-							</div>
-							<div className="admin-chart-panel">
-								<div className="admin-chart-panel__heading"><div><h3>Website visits</h3><p>Illustrative sample data</p></div><span>LAST 7 DAYS</span></div>
-								<div className="admin-bar-chart" role="img" aria-label="Illustrative website visits chart">
-									{visits.map((value, index) => <span key={index} style={{ height: `${value}%` }} />)}
-								</div>
-								<div className="admin-chart-panel__axis"><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span></div>
-							</div>
+							<div className="admin-panel__heading"><div><p className="section-kicker">OVERVIEW</p><h2>Website content</h2></div><button type="button" className="admin-button admin-button--primary" onClick={() => setActiveSection("pages")}><FileText size={15} /> Edit public pages</button></div>
+							{contentLoading ? <p className="admin-notice" role="status">Loading saved website content...</p> : null}
+							{contentError ? <p className="admin-notice admin-notice--error" role="alert">{contentError}</p> : null}
 							<div className="admin-activity">
-								<div className="admin-activity__heading"><h3>Site snapshot</h3><span>DEMO CONTENT</span></div>
-								<div><BookOpen size={16} /><span>Ministries listed</span><strong>6</strong></div>
-								<div><CalendarDays size={16} /><span>Upcoming public events</span><strong>0</strong></div>
+								<div><BookOpen size={16} /><span>Sermons</span><strong>{content.sermons.length}</strong></div>
+								<div><CalendarDays size={16} /><span>Upcoming events</span><strong>{content.events.length}</strong></div>
 							</div>
-							<p className="admin-disclaimer">Analytics figures are examples only. Visitor tracking is not connected.</p>
 						</div>
-					) : activeSection === "analytics" ? (
-						<div className="admin-panel">
-							<div className="admin-panel__heading"><div><p className="section-kicker">REPORTING</p><h2>Analytics</h2></div><div className="admin-range" role="group" aria-label="Analytics date range">{["7 days", "30 days", "12 months"].map((range) => <button type="button" key={range} className={timeRange === range ? "admin-range__active" : ""} aria-pressed={timeRange === range} onClick={() => setTimeRange(range)}>{range}</button>)}</div></div>
-							<div className="admin-metrics">
-								<Metric label="Visits" value={timeRange === "7 days" ? "1,284" : timeRange === "30 days" ? "4,812" : "48,204"} change="12.8%" icon={Activity} />
-								<Metric label="Visitors" value={timeRange === "7 days" ? "936" : timeRange === "30 days" ? "3,604" : "36,118"} change="8.2%" icon={UsersRound} />
-								<Metric label="Engagement" value="2m 18s" change="4.1%" icon={Clock3} />
+					) : activeSection === "livestream" ? (
+						<form className="admin-panel admin-livestream" onSubmit={saveLivestream}>
+							<div className="admin-panel__heading">
+								<div><p className="section-kicker">PUBLIC WATCH LIVE PAGE</p><h2>Livestream link</h2></div>
+								<button className="admin-button admin-button--primary" disabled={livestreamLoading || livestreamSaving || Boolean(livestreamError)} type="submit"><Save size={15} /> {livestreamSaving ? "Saving..." : "Save livestream"}</button>
 							</div>
-							<div className="admin-chart-panel admin-chart-panel--large">
-								<div className="admin-chart-panel__heading"><div><h3>Traffic overview</h3><p>Illustrative sample data · {timeRange}</p></div><span><ArrowDownRight size={14} /> DEMO</span></div>
-								<div className="admin-bar-chart" role="img" aria-label={`Illustrative visitor traffic over ${timeRange}`}>
-									{[...visits, ...visits.slice(2, 8)].map((value, index) => <span key={index} style={{ height: `${value}%` }} />)}
+							<p>Choose the platform for the next service and paste its public live video link. Saving publishes the stream on the website immediately.</p>
+							<label htmlFor="livestream-platform">Streaming platform
+								<select id="livestream-platform" value={livestreamSettings.platform} onChange={(event) => { const platform = event.currentTarget.value; if (platform === "youtube" || platform === "facebook") setLivestreamSettings((current) => ({ ...current, platform })); setLivestreamNotice(""); }}>
+									<option value="youtube">YouTube</option>
+									<option value="facebook">Facebook</option>
+								</select>
+							</label>
+							<label htmlFor="livestream-url">Public {livestreamSettings.platform === "youtube" ? "YouTube" : "Facebook"} live video URL
+								<input
+									autoComplete="url"
+									id="livestream-url"
+									onChange={(event) => { const url = event.currentTarget.value; setLivestreamSettings((current) => ({ ...current, url })); setLivestreamNotice(""); }}
+									placeholder={livestreamSettings.platform === "youtube" ? "https://www.youtube.com/live/..." : "https://www.facebook.com/.../videos/..."}
+									required
+									type="url"
+									value={livestreamSettings.url}
+								/>
+							</label>
+							<label className="admin-live-toggle">
+								<input
+									checked={livestreamSettings.isLive}
+									type="checkbox"
+									onChange={(event) => {
+										setLivestreamSettings((current) => ({ ...current, isLive: event.currentTarget.checked }));
+										setLivestreamNotice("");
+									}}
+								/>
+								<span><strong>We are live now</strong><small>Turn this on when the stream has started. Subscribers will be notified when you save.</small></span>
+							</label>
+							<p className="admin-livestream__help">Use the specific public livestream/video URL, not the channel or Facebook Page URL. For Facebook, the video must be public and allow embedding. Update and save this link each time the live video URL changes.</p>
+							{livestreamLoading ? <p className="admin-notice" role="status">Loading saved livestream settings...</p> : null}
+							{livestreamError ? <p className="admin-notice admin-notice--error" role="alert">{livestreamError}</p> : null}
+							{livestreamNotice ? <p className="admin-notice" role="status">{livestreamNotice}</p> : null}
+						</form>
+					) : activeSection === "notifications" ? (
+						<div className="admin-panel admin-panel--wide">
+							<div className="admin-panel__heading">
+								<div><p className="section-kicker">OPT-IN BROWSER DEVICES</p><h2>Notification subscribers</h2></div>
+								<button type="button" className="admin-button" onClick={() => void loadPushSubscriptions()} disabled={pushSubscriptionsLoading}>
+									{pushSubscriptionsLoading ? "Refreshing..." : "Refresh list"}
+								</button>
+							</div>
+							<p className="admin-notification-help">These devices have opted in to new sermon announcements, event reminders, and livestream alerts. No names, email addresses, or browser subscription details are shown here.</p>
+							<div className="admin-notification-count"><Bell size={18} /><span>Subscribed devices</span><strong>{pushSubscriptions.length}</strong></div>
+							{pushSubscriptionsLoading ? <p className="admin-notice" role="status">Loading subscribed devices...</p> : null}
+							{pushSubscriptionsError ? <p className="admin-notice admin-notice--error" role="alert">{pushSubscriptionsError}</p> : null}
+							{!pushSubscriptionsLoading && !pushSubscriptionsError ? (
+								<div className="admin-table-wrap">
+									<table className="admin-membership-table">
+										<thead><tr><th>Device</th><th>Subscribed since</th><th>Last updated</th></tr></thead>
+										<tbody>
+											{pushSubscriptions.length ? pushSubscriptions.map((subscription, index) => (
+												<tr key={subscription.id}>
+													<td>Subscribed device {pushSubscriptions.length - index}</td>
+													<td>{new Date(subscription.createdAt).toLocaleString()}</td>
+													<td>{new Date(subscription.updatedAt).toLocaleString()}</td>
+												</tr>
+											)) : <tr><td colSpan={3}>No devices have subscribed to notifications yet.</td></tr>}
+										</tbody>
+									</table>
 								</div>
-							</div>
-							<p className="admin-disclaimer">This preview is not connected to Google Analytics or any visitor tracking service.</p>
+							) : null}
 						</div>
 					) : activeSection === "memberships" ? (
 						<div className="admin-panel admin-panel--wide">
@@ -253,18 +494,15 @@ export function AdminDashboard() {
 							) : null}
 						</div>
 					) : (
-						<form className="admin-panel admin-editor" onSubmit={showPreviewNotice}>
-							<div className="admin-panel__heading"><div><p className="section-kicker">CONTENT CONTROLS</p><h2>{sections.find((section) => section.id === activeSection)?.label}</h2></div><button className="admin-button admin-button--primary" type="submit"><Save size={15} /> Save preview</button></div>
+						<form className="admin-panel admin-editor" onSubmit={saveContent}>
+							<div className="admin-panel__heading"><div><p className="section-kicker">PUBLISHED WEBSITE CONTENT</p><h2>{sections.find((section) => section.id === activeSection)?.label}</h2></div><button className="admin-button admin-button--primary" disabled={contentLoading || contentSaving || Boolean(contentError)} type="submit"><Save size={15} /> {contentSaving ? "Saving..." : "Save and publish"}</button></div>
 							{activeSection === "pages" ? <>
-								<fieldset><legend>Homepage</legend><label>Hero headline<input name="homeHeading" value={draft.homeHeading} onChange={updateDraft} /></label><label>Welcome description<textarea name="homeDescription" value={draft.homeDescription} onChange={updateDraft} rows={3} /></label><label>Primary action label<input name="primaryCta" value={draft.primaryCta} onChange={updateDraft} /></label></fieldset>
-								<fieldset><legend>About page</legend><label>Church introduction<textarea name="aboutText" value={draft.aboutText} onChange={updateDraft} rows={3} /></label></fieldset>
-								<fieldset><legend>Other public pages</legend><label>Sermons introduction<textarea name="sermonDescription" value={draft.sermonDescription} onChange={updateDraft} rows={2} /></label><label>Testimonies introduction<textarea name="testimonyDescription" value={draft.testimonyDescription} onChange={updateDraft} rows={2} /></label><label>Prayer request introduction<textarea name="prayerDescription" value={draft.prayerDescription} onChange={updateDraft} rows={2} /></label><label>Giving information<textarea name="givingDescription" value={draft.givingDescription} onChange={updateDraft} rows={2} /></label><label>Livestream introduction<textarea name="livestreamDescription" value={draft.livestreamDescription} onChange={updateDraft} rows={2} /></label><label>Privacy policy summary<textarea name="privacySummary" value={draft.privacySummary} onChange={updateDraft} rows={2} /></label></fieldset>
-								<fieldset><legend>Contact details</legend><label>Church email<input name="contactEmail" type="email" value={draft.contactEmail} onChange={updateDraft} /></label><label>Church phone<input name="contactPhone" type="tel" value={draft.contactPhone} onChange={updateDraft} /></label></fieldset>
-							</> : activeSection === "services" ? <fieldset><legend>Sunday worship</legend><div className="admin-editor__row"><label>Workers Prayer &amp; Training<input name="prayerTime" value={draft.prayerTime} onChange={updateDraft} /></label><label>Sunday School<input name="schoolTime" value={draft.schoolTime} onChange={updateDraft} /></label><label>Service starts<input name="serviceTime" value={draft.serviceTime} onChange={updateDraft} /></label></div><label>Church address<textarea name="serviceAddress" value={draft.serviceAddress} onChange={updateDraft} rows={2} /></label></fieldset> : <>
-								<fieldset><legend>Ministries</legend><label>Ministry names<textarea name="ministrySummary" value={draft.ministrySummary} onChange={updateDraft} rows={3} /></label></fieldset>
-								<fieldset><legend>Events</legend><label>Featured event title<input name="eventTitle" value={draft.eventTitle} onChange={updateDraft} /></label><label>Event summary<textarea name="eventDescription" value={draft.eventDescription} onChange={updateDraft} rows={3} /></label></fieldset>
-							</>}
+								<fieldset><legend>Homepage</legend><label>Hero headline<input value={content.pages.homeHeading} onChange={(event) => updatePageContent("homeHeading", event.currentTarget.value)} required /></label><label>Hero description<textarea value={content.pages.homeDescription} onChange={(event) => updatePageContent("homeDescription", event.currentTarget.value)} rows={3} required /></label><label>Welcome heading<input value={content.pages.welcomeHeading} onChange={(event) => updatePageContent("welcomeHeading", event.currentTarget.value)} required /></label><label>Welcome description<textarea value={content.pages.welcomeDescription} onChange={(event) => updatePageContent("welcomeDescription", event.currentTarget.value)} rows={3} required /></label></fieldset>
+								<fieldset><legend>Sermons page</legend><label>Introduction<textarea value={content.pages.sermonDescription} onChange={(event) => updatePageContent("sermonDescription", event.currentTarget.value)} rows={3} required /></label></fieldset>
+							</> : activeSection === "services" ? <fieldset><legend>Sunday services</legend><label>Service heading<input value={content.services.day} onChange={(event) => setContent((current) => ({ ...current, services: { ...current.services, day: event.currentTarget.value } }))} required /></label>{content.services.schedule.map((item, index) => <div className="admin-editor__row" key={index}><label>Service name<input value={item.label} onChange={(event) => updateServiceSchedule(index, "label", event.currentTarget.value)} required /></label><label>Time<input value={item.time} onChange={(event) => updateServiceSchedule(index, "time", event.currentTarget.value)} required /></label></div>)}<label>Church address<textarea value={content.services.address} onChange={(event) => setContent((current) => ({ ...current, services: { ...current.services, address: event.currentTarget.value } }))} rows={2} required /></label></fieldset> : activeSection === "events" ? <fieldset><legend>Upcoming events</legend><button type="button" className="admin-button" onClick={addEvent}><CalendarDays size={15} /> Add event</button>{content.events.map((item, index) => <div className="admin-editor__entry" key={`${item.date}-${index}`}><div className="admin-editor__row"><label>Event title<input value={item.title} onChange={(event) => updateEvent(index, "title", event.currentTarget.value)} required /></label><label>Date<input type="date" value={item.date} onChange={(event) => updateEvent(index, "date", event.currentTarget.value)} required /></label><label>Time<input value={item.time} onChange={(event) => updateEvent(index, "time", event.currentTarget.value)} required /></label></div><label>Event flyer (JPEG, PNG, WebP, or GIF; max 5 MB)<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(event) => void uploadImage(event, `event-${index}`, (image) => updateEvent(index, "image", image))} disabled={Boolean(uploadingImage)} /></label>{item.image ? <div className="admin-image-preview"><Image className="admin-image-preview__img" src={item.image} alt={`${item.title || "Event"} flyer preview`} width={480} height={270} unoptimized /><button type="button" className="admin-button" onClick={() => updateEvent(index, "image", "")}>Remove flyer</button></div> : <div className="admin-image-placeholder"><ImagePlus size={22} /><span>Event flyer preview will appear here</span></div>}{uploadingImage === `event-${index}` ? <p role="status">Uploading flyer...</p> : null}<label>Presented by<textarea value={item.organizer} onChange={(event) => updateEvent(index, "organizer", event.currentTarget.value)} rows={3} required /></label><div className="admin-editor__row"><label>Theme<input value={item.theme} onChange={(event) => updateEvent(index, "theme", event.currentTarget.value)} required /></label><label>Scripture<input value={item.scripture} onChange={(event) => updateEvent(index, "scripture", event.currentTarget.value)} required /></label><label>Case study<input value={item.caseStudy} onChange={(event) => updateEvent(index, "caseStudy", event.currentTarget.value)} required /></label></div><label>Featuring (one item per line)<textarea value={item.featuring.join("\n")} onChange={(event) => updateEvent(index, "featuring", event.currentTarget.value)} rows={4} required /></label><label>Location (optional)<input value={item.location} onChange={(event) => updateEvent(index, "location", event.currentTarget.value)} /></label><label>Additional details (optional)<textarea value={item.description} onChange={(event) => updateEvent(index, "description", event.currentTarget.value)} rows={3} /></label><button type="button" className="admin-button" onClick={() => removeEvent(index)}>Remove event</button></div>)}</fieldset> : null}
+							{activeSection === "sermons" ? <fieldset><legend>Sermon records</legend><button type="button" className="admin-button" onClick={addSermon}><BookOpen size={15} /> Add sermon</button>{content.sermons.map((sermon, index) => <div className="admin-editor__entry" key={`${sermon.date}-${sermon.service}-${index}`}><div className="admin-editor__row"><label>Sermon date<input type="date" value={sermon.date} onChange={(event) => updateSermon(index, "date", event.currentTarget.value)} required /></label><label>Service<input value={sermon.service} onChange={(event) => updateSermon(index, "service", event.currentTarget.value)} required /></label><label>Sermon title<input value={sermon.title} onChange={(event) => updateSermon(index, "title", event.currentTarget.value)} required /></label></div><label>Sermon image (JPEG, PNG, WebP, or GIF; max 5 MB)<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(event) => void uploadImage(event, `sermon-${index}`, (image) => updateSermon(index, "image", image))} disabled={Boolean(uploadingImage)} /></label>{sermon.image ? <div className="admin-image-preview"><Image className="admin-image-preview__img" src={sermon.image} alt={`${sermon.title || "Sermon"} image preview`} width={480} height={270} unoptimized /><button type="button" className="admin-button" onClick={() => updateSermon(index, "image", "")}>Remove image</button></div> : <div className="admin-image-placeholder"><ImagePlus size={22} /><span>Sermon image placeholder</span></div>}{uploadingImage === `sermon-${index}` ? <p role="status">Uploading image...</p> : null}<div className="admin-editor__row"><label>Speaker<input value={sermon.speaker} onChange={(event) => updateSermon(index, "speaker", event.currentTarget.value)} required /></label><label>Topic<input value={sermon.topic} onChange={(event) => updateSermon(index, "topic", event.currentTarget.value)} required /></label></div><label>Scripture references (one per line)<textarea value={sermon.scriptures.join("\n")} onChange={(event) => updateSermon(index, "scriptures", event.currentTarget.value)} rows={3} /></label><label>Sermon summary<textarea value={sermon.summary} onChange={(event) => updateSermon(index, "summary", event.currentTarget.value)} rows={4} required /></label><label>Sermon notes (one per line)<textarea value={sermon.points.join("\n")} onChange={(event) => updateSermon(index, "points", event.currentTarget.value)} rows={4} /></label><label>Prayer points (one per line)<textarea value={sermon.prayerPoints.join("\n")} onChange={(event) => updateSermon(index, "prayerPoints", event.currentTarget.value)} rows={3} /></label><button type="button" className="admin-button" onClick={() => removeSermon(index)}>Remove sermon</button></div>)}</fieldset> : null}
 							{notice ? <p className="admin-notice" role="status">{notice}</p> : null}
+							{contentError ? <p className="admin-notice admin-notice--error" role="alert">{contentError}</p> : null}
 						</form>
 					)}
 				</div>
