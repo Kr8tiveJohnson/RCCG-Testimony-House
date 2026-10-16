@@ -106,7 +106,7 @@ export function isWebsiteContent(value: unknown): value is WebsiteContent {
 	const isTextList = (items: unknown, maximumItems = 100) =>
 		Array.isArray(items) && items.length <= maximumItems && items.every((item) => isText(item, 5000));
 	const isImageReference = (image: unknown) =>
-		image === undefined || (typeof image === "string" && image.length <= 80 && /^\/api\/media\/[0-9a-f-]{36}$/i.test(image));
+		image === undefined || image === "" || (typeof image === "string" && image.length <= 80 && /^\/api\/media\/[0-9a-f-]{36}$/i.test(image));
 
 	if (!content.pages || !content.services || !Array.isArray(content.ministries) ||
 		!Array.isArray(content.events) || !Array.isArray(content.sermons)) return false;
