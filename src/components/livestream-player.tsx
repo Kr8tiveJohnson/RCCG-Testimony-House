@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { LivestreamStatus } from "./livestream-status";
@@ -15,6 +16,7 @@ export function LivestreamPlayer() {
 	const [settings, setSettings] = useState<LivestreamSettings>(DEFAULT_LIVESTREAM_SETTINGS);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState("");
+	const [logoPhase, setLogoPhase] = useState<"in" | "hold" | "out" | "hidden">("hidden");
 
 	useEffect(() => {
 		let active = true;
@@ -43,6 +45,26 @@ export function LivestreamPlayer() {
 		};
 	}, []);
 
+	// Logo animation: bounce in -> hold -> slide out left -> hidden -> repeat every 30s
+	useEffect(() => {
+		const timeouts: ReturnType<typeof setTimeout>[] = [];
+
+		function runCycle() {
+			setLogoPhase("in");
+			timeouts.push(setTimeout(() => setLogoPhase("hold"), 700));    // bounce done
+			timeouts.push(setTimeout(() => setLogoPhase("out"), 4500));    // hold ~3.8s then exit
+			timeouts.push(setTimeout(() => setLogoPhase("hidden"), 5500)); // slide-out lasts 1s
+		}
+
+		timeouts.push(setTimeout(runCycle, 1500)); // first cycle after 1.5s
+		const interval = setInterval(runCycle, 30000);
+
+		return () => {
+			timeouts.forEach(clearTimeout);
+			clearInterval(interval);
+		};
+	}, []);
+
 	const embedUrl = getLivestreamEmbedUrl(settings);
 	const platformLabel = getLivestreamPlatformLabel(settings.platform);
 
@@ -58,12 +80,28 @@ export function LivestreamPlayer() {
 						allowFullScreen
 					/>
 					{settings.platform === "youtube" ? <LivestreamStatus /> : (
-						<div className={`livestream-player__status${settings.isLive ? " livestream-player__status--live" : ""}`}><span aria-hidden="true" /> {settings.isLive ? "FACEBOOK LIVE NOW" : "FACEBOOK STREAM"}</div>
+						<div className={`livestream-player__status${settings.isLive ? " livestream-player__status--live" : ""}`}>
+							<span aria-hidden="true" /> {settings.isLive ? "FACEBOOK LIVE NOW" : "FACEBOOK STREAM"}
+						</div>
 					)}
 				</div>
 				<div className="livestream-player__footer">
 					<span>{loading ? "LOADING STREAM" : `${platformLabel.toUpperCase()} LIVE STREAM`}</span>
-					<span>Streaming from RCCG Testimony House</span>
+					<span className="livestream-player__footer-brand">
+						{logoPhase !== "hidden" && (
+							<span className={`livestream-player__logo-wrap livestream-player__logo-wrap--${logoPhase}`}>
+								<Image
+									src="/images/logo/TESTIMONY LOGO.png"
+									alt="RCCG Testimony House"
+									width={28}
+									height={28}
+									className="livestream-player__logo"
+									priority
+								/>
+							</span>
+						)}
+						Streaming from RCCG Testimony House
+					</span>
 				</div>
 			</div>
 			{error ? <p className="livestream-player__error" role="status">{error}</p> : null}
