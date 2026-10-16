@@ -10,10 +10,20 @@ type InstallPromptEvent = Event & {
 };
 
 function decodeApplicationServerKey(key: string) {
-	const padding = "=".repeat((4 - key.length % 4) % 4);
+	const padding = "=".repeat((4 - (key.length % 4)) % 4);
 	const base64 = (key + padding).replace(/-/g, "+").replace(/_/g, "/");
 	const raw = atob(base64);
 	return Uint8Array.from(raw, (character) => character.charCodeAt(0));
+}
+
+function formatPushError(error: unknown): Error {
+	const msg = error instanceof Error ? error.message : String(error);
+	if (/push service error|registration failed/i.test(msg)) {
+		return new Error(
+			"Push notification service could not be reached. If you are in Private/Incognito mode, using Brave (enable 'Use Google services for push' in settings), or behind a restricted network, push notifications may be blocked by your browser.",
+		);
+	}
+	return error instanceof Error ? error : new Error(msg);
 }
 
 export function AppPrompt() {
@@ -30,7 +40,8 @@ export function AppPrompt() {
 		const updateBrowserCapabilities = () => {
 			setDismissed(window.sessionStorage.getItem("rccg-app-prompt-dismissed") === "true");
 			setPushSupported("Notification" in window && "serviceWorker" in navigator && "PushManager" in window);
-			const standalone = window.matchMedia("(display-mode: standalone)").matches ||
+			const standalone =
+				window.matchMedia("(display-mode: standalone)").matches ||
 				("standalone" in navigator && Boolean((navigator as Navigator & { standalone?: boolean }).standalone));
 			setIsInstalled(standalone);
 		};
@@ -48,14 +59,18 @@ export function AppPrompt() {
 		window.addEventListener("appinstalled", handleInstalled);
 
 		if ("serviceWorker" in navigator) {
-			void navigator.serviceWorker.register("/sw.js").then(async (registration) => {
-				updateBrowserCapabilities();
-				const subscription = await registration.pushManager?.getSubscription();
-				setPushSubscribed(Boolean(subscription) && "Notification" in window && Notification.permission === "granted");
-			}).catch((error: unknown) => {
-				console.error("Could not register the website app service worker.", error);
-				setMessage("App features could not be started. Refresh the page and try again.");
-			});
+			void navigator.serviceWorker
+				.register("/sw.js")
+				.then(async () => {
+					updateBrowserCapabilities();
+					const registration = await navigator.serviceWorker.ready;
+					const subscription = await registration.pushManager?.getSubscription();
+					setPushSubscribed(Boolean(subscription) && "Notification" in window && Notification.permission === "granted");
+				})
+				.catch((error: unknown) => {
+					console.error("Could not register the website app service worker.", error);
+					setMessage("App features could not be started. Refresh the page and try again.");
+				});
 		}
 
 		return () => {
@@ -67,9 +82,11 @@ export function AppPrompt() {
 
 	const handleInstall = useCallback(async () => {
 		if (!installPrompt) {
-			setMessage(/iPhone|iPad|iPod/i.test(navigator.userAgent)
-				? "In Safari, tap Share, then choose Add to Home Screen."
-				: "Use your browser menu and choose Install app or Add to Home screen.");
+			setMessage(
+				/iPhone|iPad|iPod/i.test(navigator.userAgent)
+					? "In Safari, tap Share, then choose Add to Home Screen."
+					: "Use your browser menu and choose Install app or Add to Home screen.",
+			);
 			return;
 		}
 		await installPrompt.prompt();
@@ -82,7 +99,9 @@ export function AppPrompt() {
 		setBusy(true);
 		setMessage("");
 		try {
-			const registration = await navigator.serviceWorker.register("/sw.js");
+			await navigator.serviceWorker.register("/sw.js");
+			const registration = await navigator.serviceWorker.ready;
+
 			if (pushSubscribed) {
 				const subscription = await registration.pushManager.getSubscription();
 				if (subscription) {
@@ -91,7 +110,7 @@ export function AppPrompt() {
 						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify({ endpoint: subscription.endpoint }),
 					});
-					const result = await response.json() as { success?: boolean; error?: string };
+					const result = (await response.json()) as { success?: boolean; error?: string };
 					if (!response.ok || !result.success) throw new Error(result.error || "Could not turn off notifications.");
 					await subscription.unsubscribe();
 				}
@@ -107,21 +126,41 @@ export function AppPrompt() {
 			if (permission !== "granted") throw new Error("Notifications were not enabled.");
 
 			const keyResponse = await fetch("/api/push/public-key", { cache: "no-store" });
-			const keyResult = await keyResponse.json() as { success?: boolean; publicKey?: string; error?: string };
+			const keyResult = (await keyResponse.json()) as { success?: boolean; publicKey?: string; error?: string };
 			if (!keyResponse.ok || !keyResult.success || !keyResult.publicKey) {
 				throw new Error(keyResult.error || "Church notifications are not ready yet.");
 			}
 
-			const subscription = await registration.pushManager.subscribe({
-				userVisibleOnly: true,
-				applicationServerKey: decodeApplicationServerKey(keyResult.publicKey),
-			});
+			let subscription: PushSubscription;
+			try {
+				subscription = await registration.pushManager.subscribe({
+					userVisibleOnly: true,
+					applicationServerKey: decodeApplicationServerKey(keyResult.publicKey),
+				});
+			} catch (pushError) {
+				// If subscribing failed, check if a stale subscription exists and clear it first before retrying
+				const existing = await registration.pushManager.getSubscription().catch(() => null);
+				if (existing) {
+					try {
+						await existing.unsubscribe();
+						subscription = await registration.pushManager.subscribe({
+							userVisibleOnly: true,
+							applicationServerKey: decodeApplicationServerKey(keyResult.publicKey),
+						});
+					} catch (retryError) {
+						throw formatPushError(retryError);
+					}
+				} else {
+					throw formatPushError(pushError);
+				}
+			}
+
 			const response = await fetch("/api/push/subscriptions", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify(subscription),
 			});
-			const result = await response.json() as { success?: boolean; error?: string };
+			const result = (await response.json()) as { success?: boolean; error?: string };
 			if (!response.ok || !result.success) throw new Error(result.error || "Could not enable church notifications.");
 			setPushSubscribed(true);
 			setMessage("You’re subscribed to sermon announcements and event reminders.");
@@ -144,21 +183,42 @@ export function AppPrompt() {
 					window.sessionStorage.setItem("rccg-app-prompt-dismissed", "true");
 					setDismissed(true);
 				}}
-			><X size={16} /></button>
+			>
+				<X size={16} />
+			</button>
 			<p className="app-prompt__kicker">STAY CONNECTED</p>
 			<h2>Testimony House, wherever you go.</h2>
-			<p className="app-prompt__description">{isInstalled
-				? "Get reminders for upcoming events and new sermons."
-				: "Install our app and get reminders for upcoming events and new sermons."}</p>
+			<p className="app-prompt__description">
+				{isInstalled
+					? "Get reminders for upcoming events and new sermons."
+					: "Install our app and get reminders for upcoming events and new sermons."}
+			</p>
 			<div className="app-prompt__actions">
-				{!isInstalled ? <button type="button" className="app-prompt__button app-prompt__button--primary" onClick={() => void handleInstall()}>
-					<Download size={16} /> Install app
-				</button> : null}
-				{pushSupported ? <button type="button" className="app-prompt__button" onClick={() => void handleNotifications()} disabled={busy}>
-					<Bell size={16} /> {busy ? "Please wait..." : pushSubscribed ? "Turn off notifications" : "Get notifications"}
-				</button> : null}
+				{!isInstalled ? (
+					<button
+						type="button"
+						className="app-prompt__button app-prompt__button--primary"
+						onClick={() => void handleInstall()}
+					>
+						<Download size={16} /> Install app
+					</button>
+				) : null}
+				{pushSupported ? (
+					<button
+						type="button"
+						className="app-prompt__button"
+						onClick={() => void handleNotifications()}
+						disabled={busy}
+					>
+						<Bell size={16} /> {busy ? "Please wait..." : pushSubscribed ? "Turn off notifications" : "Get notifications"}
+					</button>
+				) : null}
 			</div>
-			{message ? <p className="app-prompt__message" role="status">{message}</p> : null}
+			{message ? (
+				<p className="app-prompt__message" role="status">
+					{message}
+				</p>
+			) : null}
 		</aside>
 	);
 }
