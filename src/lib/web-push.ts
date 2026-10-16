@@ -134,9 +134,10 @@ export async function notifyNewEvents(previous: EventContent[], current: EventCo
 	const outcomes: DeliveryResult[] = [];
 
 	for (const event of published) {
+		const descriptionSummary = event.description?.split("\n")[0]?.trim();
 		outcomes.push(await sendPushToSubscribers({
 			title: `Upcoming event: ${event.title}`,
-			body: [event.time, event.theme].filter(Boolean).join(" · ") || "Join us at RCCG Testimony House.",
+			body: descriptionSummary || [event.time, event.theme].filter(Boolean).join(" · ") || "Join us at RCCG Testimony House.",
 			url: "/events",
 		}));
 	}
