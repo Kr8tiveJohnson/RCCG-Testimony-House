@@ -54,8 +54,7 @@ export function LivestreamPlayer() {
 						className="livestream-player__embed"
 						src={embedUrl}
 						title={`RCCG Testimony House ${platformLabel} livestream`}
-						allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-						referrerPolicy="strict-origin-when-cross-origin"
+						allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
 						allowFullScreen
 					/>
 					{settings.platform === "youtube" ? <LivestreamStatus /> : (
