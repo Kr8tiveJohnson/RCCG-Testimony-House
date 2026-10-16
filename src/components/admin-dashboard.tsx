@@ -206,6 +206,42 @@ export function AdminDashboard() {
 		setNotice("");
 	}
 
+	function setupWelcomeTemplate(variant: "standard" | "warm") {
+		if (variant === "standard") {
+			setBroadcastTitle("Welcome to RCCG Testimony House! 🙏");
+			setBroadcastBody("We are blessed to have you in our church family! Stay connected for weekly services, inspiring sermon notes, and special event announcements.");
+			setBroadcastUrl("/");
+		} else {
+			setBroadcastTitle("Glad You Are Connected! ✨");
+			setBroadcastBody("Thank you for subscribing to Testimony House updates. We pray God's supernatural grace, peace, and favor rest upon you and your household.");
+			setBroadcastUrl("/about");
+		}
+		setBroadcastNotice("");
+		setBroadcastError("");
+	}
+
+	function setupWeeklyTemplate(type: "sunday" | "midweek" | "blessing" | "weekend") {
+		if (type === "sunday") {
+			setBroadcastTitle("Join Us This Sunday at Testimony House ⛪");
+			setBroadcastBody("Come experience God's glorious presence, heartfelt praise, and life-changing Word! 1st Service: 7:50 AM · 2nd Service: 10:00 AM. We can't wait to worship with you!");
+			setBroadcastUrl("/livestream");
+		} else if (type === "midweek") {
+			setBroadcastTitle("Midweek Faith Clinic & Digging Deep 📖");
+			setBroadcastBody("Refuel your spiritual strength this week! Join us for an enriching study of God's Word and breakthrough prayers. Your testimony is loading.");
+			setBroadcastUrl("/services");
+		} else if (type === "blessing") {
+			setBroadcastTitle("Your Week of Divine Favor & Restoration ✨");
+			setBroadcastBody("May the Lord open doors of breakthrough for you and your household this week. Walk in victory, good health, and supernatural peace in Jesus' name!");
+			setBroadcastUrl("/");
+		} else {
+			setBroadcastTitle("Weekend Reflection & Fellowship 🕊️");
+			setBroadcastBody("As we prepare for the Lord's Day, take a moment to reflect on His faithfulness. We look forward to worshiping together this Sunday at Testimony House!");
+			setBroadcastUrl("/events");
+		}
+		setBroadcastNotice("");
+		setBroadcastError("");
+	}
+
 	function setupReminderTemplate(eventIndex: number, timing: "reminder" | "today" | "tomorrow" | "soon") {
 		const targetEvent = content.events[eventIndex];
 		if (!targetEvent) return;
@@ -491,61 +527,138 @@ export function AdminDashboard() {
 							<form className="admin-panel admin-broadcast-panel" onSubmit={sendBroadcastNotification}>
 								<div className="admin-panel__heading">
 									<div>
-										<p className="section-kicker">PUSH BROADCAST</p>
-										<h2>Send event reminder or announcement</h2>
+										<p className="section-kicker">PUSH BROADCAST CENTER</p>
+										<h2>Broadcast notifications to subscribers</h2>
 									</div>
-									<button
-										type="submit"
-										className="admin-button admin-button--primary"
-										disabled={broadcastSending || !broadcastTitle.trim() || !broadcastBody.trim()}
-									>
-										<Send size={15} /> {broadcastSending ? "Sending..." : "Send to all devices"}
-									</button>
+									<div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+										{(broadcastTitle || broadcastBody) ? (
+											<button
+												type="button"
+												className="admin-button admin-button--sm"
+												onClick={() => {
+													setBroadcastTitle("");
+													setBroadcastBody("");
+													setBroadcastUrl("/");
+													setBroadcastNotice("");
+													setBroadcastError("");
+												}}
+											>
+												Clear form
+											</button>
+										) : null}
+										<button
+											type="submit"
+											className="admin-button admin-button--primary"
+											disabled={broadcastSending || !broadcastTitle.trim() || !broadcastBody.trim()}
+										>
+											<Send size={15} /> {broadcastSending ? "Sending..." : "Send to all devices"}
+										</button>
+									</div>
 								</div>
 								<p>
-									Send an immediate reminder notification to all subscribed church members without saying &ldquo;upcoming&rdquo;. Pick an event template below or customize your message.
+									Broadcast instant push notifications to all subscribed church members. Choose a <strong>Welcome Message</strong>, <strong>Weekly Church Message</strong>, or <strong>Event Reminder</strong> template below, or type your own custom announcement.
 								</p>
 
-								{content.events.length ? (
-									<div className="admin-reminder-templates">
-										<p><strong>Quick event reminder templates:</strong></p>
+								<div className="admin-reminder-templates">
+									<div className="admin-template-section">
+										<p><strong>🌟 Welcome Message for Subscribers:</strong> <small style={{ color: "#64748b" }}>Send a warm welcome to new or existing subscribers anytime</small></p>
 										<div className="admin-reminder-buttons">
-											{content.events.map((item, index) => (
-												<div key={index} className="admin-reminder-group">
-													<span className="admin-reminder-label">{item.title}:</span>
-													<button
-														type="button"
-														className="admin-button admin-button--sm"
-														onClick={() => setupReminderTemplate(index, "reminder")}
-													>
-														Reminder: {item.title}
-													</button>
-													<button
-														type="button"
-														className="admin-button admin-button--sm"
-														onClick={() => setupReminderTemplate(index, "today")}
-													>
-														Today: {item.title}
-													</button>
-													<button
-														type="button"
-														className="admin-button admin-button--sm"
-														onClick={() => setupReminderTemplate(index, "tomorrow")}
-													>
-														Tomorrow: {item.title}
-													</button>
-													<button
-														type="button"
-														className="admin-button admin-button--sm"
-														onClick={() => setupReminderTemplate(index, "soon")}
-													>
-														Happening Soon: {item.title}
-													</button>
-												</div>
-											))}
+											<div className="admin-reminder-group">
+												<button
+													type="button"
+													className="admin-button admin-button--sm"
+													onClick={() => setupWelcomeTemplate("standard")}
+												>
+													👋 Welcome to Testimony House
+												</button>
+												<button
+													type="button"
+													className="admin-button admin-button--sm"
+													onClick={() => setupWelcomeTemplate("warm")}
+												>
+													✨ Glad You Are Connected
+												</button>
+											</div>
 										</div>
 									</div>
-								) : null}
+
+									<div className="admin-template-section">
+										<p><strong>⛪ Weekly Church Broadcast Messages:</strong> <small style={{ color: "#64748b" }}>Weekly encouragement, Sunday invites, and prayer points</small></p>
+										<div className="admin-reminder-buttons">
+											<div className="admin-reminder-group">
+												<button
+													type="button"
+													className="admin-button admin-button--sm"
+													onClick={() => setupWeeklyTemplate("sunday")}
+												>
+													⛪ Sunday Service Invitation
+												</button>
+												<button
+													type="button"
+													className="admin-button admin-button--sm"
+													onClick={() => setupWeeklyTemplate("midweek")}
+												>
+													📖 Midweek Digging Deep & Faith Clinic
+												</button>
+												<button
+													type="button"
+													className="admin-button admin-button--sm"
+													onClick={() => setupWeeklyTemplate("blessing")}
+												>
+													✨ Weekly Prophetic Blessing
+												</button>
+												<button
+													type="button"
+													className="admin-button admin-button--sm"
+													onClick={() => setupWeeklyTemplate("weekend")}
+												>
+													🕊️ Weekend Reflection & Fellowship
+												</button>
+											</div>
+										</div>
+									</div>
+
+									{content.events.length ? (
+										<div className="admin-template-section">
+											<p><strong>📅 Quick Event Reminder Templates:</strong> <small style={{ color: "#64748b" }}>One-click reminder broadcasts for upcoming church events</small></p>
+											<div className="admin-reminder-buttons">
+												{content.events.map((item, index) => (
+													<div key={index} className="admin-reminder-group">
+														<span className="admin-reminder-label">{item.title}:</span>
+														<button
+															type="button"
+															className="admin-button admin-button--sm"
+															onClick={() => setupReminderTemplate(index, "reminder")}
+														>
+															Reminder: {item.title}
+														</button>
+														<button
+															type="button"
+															className="admin-button admin-button--sm"
+															onClick={() => setupReminderTemplate(index, "today")}
+														>
+															Today: {item.title}
+														</button>
+														<button
+															type="button"
+															className="admin-button admin-button--sm"
+															onClick={() => setupReminderTemplate(index, "tomorrow")}
+														>
+															Tomorrow: {item.title}
+														</button>
+														<button
+															type="button"
+															className="admin-button admin-button--sm"
+															onClick={() => setupReminderTemplate(index, "soon")}
+														>
+															Happening Soon: {item.title}
+														</button>
+													</div>
+												))}
+											</div>
+										</div>
+									) : null}
+								</div>
 
 								<label htmlFor="broadcast-title">
 									Notification title

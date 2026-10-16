@@ -38,6 +38,30 @@ function isExpiredSubscription(error: unknown) {
 	return error.statusCode === 404 || error.statusCode === 410;
 }
 
+export async function sendPushToSubscription(
+	subscription: PushSubscription,
+	payload: NotificationPayload,
+): Promise<{ success: boolean; error?: string }> {
+	if (!vapidSettings()) {
+		return { success: false, error: "Push notifications are not configured on the server yet." };
+	}
+	try {
+		await webpush.sendNotification(subscription, JSON.stringify(payload), { TTL: 60 * 60 });
+		return { success: true };
+	} catch (error) {
+		const message = error instanceof Error ? error.message : "Notification delivery failed.";
+		return { success: false, error: message };
+	}
+}
+
+export async function sendWelcomePush(subscription: PushSubscription) {
+	return sendPushToSubscription(subscription, {
+		title: "Welcome to RCCG Testimony House! 🙏",
+		body: "We're blessed to have you in our church family! You'll receive live stream alerts, service updates, and event reminders.",
+		url: "/",
+	});
+}
+
 export async function sendPushToSubscribers(
 	payload: NotificationPayload,
 	notificationKey?: string,

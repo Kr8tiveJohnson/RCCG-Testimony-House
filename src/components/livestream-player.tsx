@@ -45,19 +45,19 @@ export function LivestreamPlayer() {
 		};
 	}, []);
 
-	// Logo animation: bounce in -> hold -> slide out left -> hidden -> repeat every 30s
+	// Logo animation: bounce in -> stay visible for ~27.5s -> slide out left (1s) -> brief reset -> repeat every 30s
 	useEffect(() => {
 		const timeouts: ReturnType<typeof setTimeout>[] = [];
 
 		function runCycle() {
 			setLogoPhase("in");
-			timeouts.push(setTimeout(() => setLogoPhase("hold"), 700));    // bounce done
-			timeouts.push(setTimeout(() => setLogoPhase("out"), 4500));    // hold ~3.8s then exit
-			timeouts.push(setTimeout(() => setLogoPhase("hidden"), 5500)); // slide-out lasts 1s
+			timeouts.push(setTimeout(() => setLogoPhase("hold"), 700));     // bounce finishes ~700ms, stays visible!
+			timeouts.push(setTimeout(() => setLogoPhase("out"), 28200));   // after ~27.5s visible, slide left away
+			timeouts.push(setTimeout(() => setLogoPhase("hidden"), 29200));// brief ~800ms reset before next cycle
 		}
 
-		timeouts.push(setTimeout(runCycle, 1500)); // first cycle after 1.5s
-		const interval = setInterval(runCycle, 30000);
+		timeouts.push(setTimeout(runCycle, 300)); // start bounce-in right after mount
+		const interval = setInterval(runCycle, 30000); // 30s repeating cycle
 
 		return () => {
 			timeouts.forEach(clearTimeout);
@@ -88,18 +88,16 @@ export function LivestreamPlayer() {
 				<div className="livestream-player__footer">
 					<span>{loading ? "LOADING STREAM" : `${platformLabel.toUpperCase()} LIVE STREAM`}</span>
 					<span className="livestream-player__footer-brand">
-						{logoPhase !== "hidden" && (
-							<span className={`livestream-player__logo-wrap livestream-player__logo-wrap--${logoPhase}`}>
-								<Image
-									src="/images/logo/TESTIMONY LOGO.png"
-									alt="RCCG Testimony House"
-									width={28}
-									height={28}
-									className="livestream-player__logo"
-									priority
-								/>
-							</span>
-						)}
+						<span className={`livestream-player__logo-wrap livestream-player__logo-wrap--${logoPhase}`}>
+							<Image
+								src="/images/logo/TESTIMONY LOGO.png"
+								alt="RCCG Testimony House"
+								width={28}
+								height={28}
+								className="livestream-player__logo"
+								priority
+							/>
+						</span>
 						Streaming from RCCG Testimony House
 					</span>
 				</div>

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { isSameOriginRequest } from "../../../../lib/admin-session";
 import { getPostgresPool, isPostgresConfigured } from "../../../../lib/postgres";
 
+import { sendWelcomePush } from "../../../../lib/web-push";
+
 export const runtime = "nodejs";
 
 const CREATE_TABLE_QUERY = `
@@ -66,13 +68,23 @@ export async function POST(request: Request) {
 	try {
 		const pool = getPostgresPool();
 		await pool.query(CREATE_TABLE_QUERY);
-		await pool.query(
+		const result = await pool.query<{ is_new: boolean }>(
 			`INSERT INTO push_subscriptions (endpoint, subscription)
 			 VALUES ($1, $2::jsonb)
 			 ON CONFLICT (endpoint) DO UPDATE
-			 SET subscription = EXCLUDED.subscription, updated_at = NOW()`,
+			 SET subscription = EXCLUDED.subscription, updated_at = NOW()
+			 RETURNING (xmax = 0) AS is_new`,
 			[subscription.endpoint, JSON.stringify(subscription)],
 		);
+
+		if (result.rows[0]?.is_new) {
+			try {
+				await sendWelcomePush(subscription as unknown as import("web-push").PushSubscription);
+			} catch (err) {
+				console.warn("Could not dispatch welcome notification to new subscriber:", err);
+			}
+		}
+
 		return NextResponse.json({ success: true }, { headers: { "Cache-Control": "no-store" } });
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Could not save notification settings.";
