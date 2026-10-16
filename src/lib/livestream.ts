@@ -63,6 +63,9 @@ export function getLivestreamEmbedUrl(settings: LivestreamSettings) {
 	const embedUrl = new URL("https://www.facebook.com/plugins/video.php");
 	embedUrl.searchParams.set("href", settings.url);
 	embedUrl.searchParams.set("show_text", "false");
+	embedUrl.searchParams.set("width", "1280");
+	embedUrl.searchParams.set("height", "720");
+	embedUrl.searchParams.set("t", "0");
 	return embedUrl.toString();
 }
 
