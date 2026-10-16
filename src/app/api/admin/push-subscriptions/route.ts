@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { isValidAdminSessionToken } from "../../../../lib/admin-session";
-import { getPostgresPool } from "../../../../lib/postgres";
+import { getPostgresPool, isPostgresConfigured } from "../../../../lib/postgres";
 
 export const runtime = "nodejs";
 
@@ -11,6 +11,10 @@ function isAuthorized(request: Request) {
 export async function GET(request: Request) {
 	if (!isAuthorized(request)) {
 		return NextResponse.json({ success: false, error: "Sign in to view notification subscribers." }, { status: 401 });
+	}
+
+	if (!isPostgresConfigured()) {
+		return NextResponse.json({ success: true, subscriptions: [] }, { headers: { "Cache-Control": "no-store" } });
 	}
 
 	try {

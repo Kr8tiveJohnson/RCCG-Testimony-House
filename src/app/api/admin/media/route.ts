@@ -44,8 +44,17 @@ export async function POST(request: Request) {
 	}
 
 	try {
+		const pool = getPostgresPool();
+		await pool.query(`
+			CREATE TABLE IF NOT EXISTS website_media (
+				id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+				mime_type TEXT NOT NULL CHECK (mime_type IN ('image/jpeg', 'image/png', 'image/webp', 'image/gif')),
+				image_data BYTEA NOT NULL,
+				created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+			);
+		`);
 		const id = randomUUID();
-		await getPostgresPool().query(
+		await pool.query(
 			"INSERT INTO website_media (id, mime_type, image_data) VALUES ($1, $2, $3)",
 			[id, mimeType, imageData],
 		);

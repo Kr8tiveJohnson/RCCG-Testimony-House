@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
-import { getPostgresPool } from "../../../../lib/postgres";
+import { getPostgresPool, isPostgresConfigured } from "../../../../lib/postgres";
 
 export const runtime = "nodejs";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
 	const { id } = await params;
 	if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+		return new NextResponse(null, { status: 404 });
+	}
+
+	if (!isPostgresConfigured()) {
 		return new NextResponse(null, { status: 404 });
 	}
 

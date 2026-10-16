@@ -1,6 +1,6 @@
 import "server-only";
 import webpush, { type PushSubscription } from "web-push";
-import { getPostgresPool } from "./postgres";
+import { getPostgresPool, isPostgresConfigured } from "./postgres";
 import type { SermonContent } from "./website-content-model";
 
 type StoredSubscription = {
@@ -46,10 +46,22 @@ export async function sendPushToSubscribers(
 		return { sent: 0, failed: 0, warning: "Push notifications are not configured on the server yet." };
 	}
 
-	const pool = getPostgresPool();
-	const result = await pool.query<StoredSubscription>(
-		"SELECT id, subscription FROM push_subscriptions ORDER BY created_at",
-	);
+	if (!isPostgresConfigured()) {
+		return { sent: 0, failed: 0, warning: "Database is not configured for push notifications." };
+	}
+
+	let result: { rows: StoredSubscription[] };
+	let pool: ReturnType<typeof getPostgresPool>;
+	try {
+		pool = getPostgresPool();
+		result = await pool.query<StoredSubscription>(
+			"SELECT id, subscription FROM push_subscriptions ORDER BY created_at",
+		);
+	} catch (error) {
+		console.warn("Could not query push subscriptions from database:", error);
+		return { sent: 0, failed: 0, warning: "Could not query push subscriptions from the database." };
+	}
+
 	let sent = 0;
 	let failed = 0;
 

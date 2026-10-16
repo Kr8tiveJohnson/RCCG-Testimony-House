@@ -1,8 +1,18 @@
 import { NextResponse } from "next/server";
 import { isSameOriginRequest } from "../../../../lib/admin-session";
-import { getPostgresPool } from "../../../../lib/postgres";
+import { getPostgresPool, isPostgresConfigured } from "../../../../lib/postgres";
 
 export const runtime = "nodejs";
+
+const CREATE_TABLE_QUERY = `
+	CREATE TABLE IF NOT EXISTS push_subscriptions (
+		id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+		endpoint TEXT NOT NULL UNIQUE,
+		subscription JSONB NOT NULL CHECK (jsonb_typeof(subscription) = 'object'),
+		created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+		updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+	);
+`;
 
 function isAllowedPushEndpoint(value: unknown): value is string {
 	if (typeof value !== "string" || value.length > 4096) return false;
@@ -49,8 +59,14 @@ export async function POST(request: Request) {
 		return NextResponse.json({ success: false, error: "The browser returned invalid notification settings." }, { status: 400 });
 	}
 
+	if (!isPostgresConfigured()) {
+		return NextResponse.json({ success: false, error: "Push subscriptions are currently unavailable." }, { status: 503 });
+	}
+
 	try {
-		await getPostgresPool().query(
+		const pool = getPostgresPool();
+		await pool.query(CREATE_TABLE_QUERY);
+		await pool.query(
 			`INSERT INTO push_subscriptions (endpoint, subscription)
 			 VALUES ($1, $2::jsonb)
 			 ON CONFLICT (endpoint) DO UPDATE
@@ -77,6 +93,10 @@ export async function DELETE(request: Request) {
 	}
 	if (!isAllowedPushEndpoint(body.endpoint)) {
 		return NextResponse.json({ success: false, error: "The browser returned invalid notification settings." }, { status: 400 });
+	}
+
+	if (!isPostgresConfigured()) {
+		return NextResponse.json({ success: true }, { headers: { "Cache-Control": "no-store" } });
 	}
 
 	try {
