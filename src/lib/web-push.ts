@@ -128,16 +128,33 @@ function eventKey(event: EventContent) {
 	return `${event.date}\u0000${event.title}`;
 }
 
+function formatEventNotificationBody(event: EventContent): string {
+	const mainText =
+		event.description?.split("\n\nMinisters:")[0]?.split("\n")[0]?.trim() ||
+		(event.theme ? `Theme: '${event.theme}'` : "");
+	const dateText = new Date(`${event.date}T12:00:00`).toLocaleDateString("en-GB", {
+		weekday: "short",
+		day: "numeric",
+		month: "short",
+		year: "numeric",
+	});
+	const timeText = event.time ? ` · ${event.time}` : "";
+
+	if (mainText) {
+		return `${mainText}\nDate: ${dateText}${timeText}`;
+	}
+	return `Date: ${dateText}${timeText}`;
+}
+
 export async function notifyNewEvents(previous: EventContent[], current: EventContent[]) {
 	const existing = new Set(previous.map(eventKey));
 	const published = current.filter((event) => !existing.has(eventKey(event)));
 	const outcomes: DeliveryResult[] = [];
 
 	for (const event of published) {
-		const descriptionSummary = event.description?.split("\n")[0]?.trim();
 		outcomes.push(await sendPushToSubscribers({
 			title: `Upcoming event: ${event.title}`,
-			body: descriptionSummary || [event.time, event.theme].filter(Boolean).join(" · ") || "Join us at RCCG Testimony House.",
+			body: formatEventNotificationBody(event),
 			url: "/events",
 		}));
 	}
