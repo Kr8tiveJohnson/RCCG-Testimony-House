@@ -13,6 +13,7 @@ import {
 	LogOut,
 	Radio,
 	Save,
+	Send,
 	UsersRound,
 } from "lucide-react";
 import {
@@ -77,6 +78,12 @@ export function AdminDashboard() {
 	const [pushSubscriptions, setPushSubscriptions] = useState<PushSubscriptionEntry[]>([]);
 	const [pushSubscriptionsLoading, setPushSubscriptionsLoading] = useState(false);
 	const [pushSubscriptionsError, setPushSubscriptionsError] = useState("");
+	const [broadcastTitle, setBroadcastTitle] = useState("");
+	const [broadcastBody, setBroadcastBody] = useState("");
+	const [broadcastUrl, setBroadcastUrl] = useState("/events");
+	const [broadcastSending, setBroadcastSending] = useState(false);
+	const [broadcastNotice, setBroadcastNotice] = useState("");
+	const [broadcastError, setBroadcastError] = useState("");
 
 	useEffect(() => {
 		let active = true;
@@ -197,6 +204,70 @@ export function AdminDashboard() {
 			},
 		}));
 		setNotice("");
+	}
+
+	function setupReminderTemplate(eventIndex: number, timing: "reminder" | "today" | "tomorrow" | "soon") {
+		const targetEvent = content.events[eventIndex];
+		if (!targetEvent) return;
+		const prefixMap = {
+			reminder: "Reminder: ",
+			today: "Today: ",
+			tomorrow: "Tomorrow: ",
+			soon: "Happening Soon: ",
+		};
+		setBroadcastTitle(`${prefixMap[timing]}${targetEvent.title}`);
+		const mainMsg =
+			targetEvent.description?.split("\n\nMinisters:")[0]?.split("\n")[0]?.trim() ||
+			(targetEvent.theme ? `Theme: '${targetEvent.theme}'` : "");
+		const datePart = `Date: ${new Date(`${targetEvent.date}T12:00:00`).toLocaleDateString("en-GB", {
+			weekday: "short",
+			day: "numeric",
+			month: "short",
+			year: "numeric",
+		})}`;
+		const timePart = targetEvent.time ? ` · ${targetEvent.time}` : "";
+		setBroadcastBody(mainMsg ? `${mainMsg}\n\n${datePart}${timePart}` : `${datePart}${timePart}`);
+		setBroadcastUrl("/events");
+		setBroadcastNotice("");
+		setBroadcastError("");
+	}
+
+	async function sendBroadcastNotification(event: FormEvent<HTMLFormElement>) {
+		event.preventDefault();
+		if (!broadcastTitle.trim() || !broadcastBody.trim()) return;
+		setBroadcastSending(true);
+		setBroadcastNotice("");
+		setBroadcastError("");
+		try {
+			const response = await fetch("/api/admin/notifications/broadcast", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					title: broadcastTitle,
+					body: broadcastBody,
+					url: broadcastUrl,
+				}),
+			});
+			const result = (await response.json()) as {
+				success?: boolean;
+				sent?: number;
+				failed?: number;
+				warning?: string;
+				error?: string;
+			};
+			if (!response.ok || !result.success) {
+				throw new Error(result.error || "Could not send notification.");
+			}
+			setBroadcastNotice(
+				result.warning
+					? `Reminder sent to ${result.sent} device(s). ${result.warning}`
+					: `Reminder notification sent successfully to ${result.sent} subscribed device(s)!`,
+			);
+		} catch (err) {
+			setBroadcastError(err instanceof Error ? err.message : "Failed to send notification.");
+		} finally {
+			setBroadcastSending(false);
+		}
 	}
 
 	function updateEvent(index: number, field: "title" | "image" | "date" | "time" | "organizer" | "theme" | "scripture" | "caseStudy" | "featuring" | "location" | "description", value: string) {
@@ -416,33 +487,167 @@ export function AdminDashboard() {
 							{livestreamNotice ? <p className="admin-notice" role="status">{livestreamNotice}</p> : null}
 						</form>
 					) : activeSection === "notifications" ? (
-						<div className="admin-panel admin-panel--wide">
-							<div className="admin-panel__heading">
-								<div><p className="section-kicker">OPT-IN BROWSER DEVICES</p><h2>Notification subscribers</h2></div>
-								<button type="button" className="admin-button" onClick={() => void loadPushSubscriptions()} disabled={pushSubscriptionsLoading}>
-									{pushSubscriptionsLoading ? "Refreshing..." : "Refresh list"}
-								</button>
-							</div>
-							<p className="admin-notification-help">These devices have opted in to new sermon announcements, event reminders, and livestream alerts. No names, email addresses, or browser subscription details are shown here.</p>
-							<div className="admin-notification-count"><Bell size={18} /><span>Subscribed devices</span><strong>{pushSubscriptions.length}</strong></div>
-							{pushSubscriptionsLoading ? <p className="admin-notice" role="status">Loading subscribed devices...</p> : null}
-							{pushSubscriptionsError ? <p className="admin-notice admin-notice--error" role="alert">{pushSubscriptionsError}</p> : null}
-							{!pushSubscriptionsLoading && !pushSubscriptionsError ? (
-								<div className="admin-table-wrap">
-									<table className="admin-membership-table">
-										<thead><tr><th>Device</th><th>Subscribed since</th><th>Last updated</th></tr></thead>
-										<tbody>
-											{pushSubscriptions.length ? pushSubscriptions.map((subscription, index) => (
-												<tr key={subscription.id}>
-													<td>Subscribed device {pushSubscriptions.length - index}</td>
-													<td>{new Date(subscription.createdAt).toLocaleString()}</td>
-													<td>{new Date(subscription.updatedAt).toLocaleString()}</td>
-												</tr>
-											)) : <tr><td colSpan={3}>No devices have subscribed to notifications yet.</td></tr>}
-										</tbody>
-									</table>
+						<div className="admin-notifications-stack">
+							<form className="admin-panel admin-broadcast-panel" onSubmit={sendBroadcastNotification}>
+								<div className="admin-panel__heading">
+									<div>
+										<p className="section-kicker">PUSH BROADCAST</p>
+										<h2>Send event reminder or announcement</h2>
+									</div>
+									<button
+										type="submit"
+										className="admin-button admin-button--primary"
+										disabled={broadcastSending || !broadcastTitle.trim() || !broadcastBody.trim()}
+									>
+										<Send size={15} /> {broadcastSending ? "Sending..." : "Send to all devices"}
+									</button>
 								</div>
-							) : null}
+								<p>
+									Send an immediate reminder notification to all subscribed church members without saying &ldquo;upcoming&rdquo;. Pick an event template below or customize your message.
+								</p>
+
+								{content.events.length ? (
+									<div className="admin-reminder-templates">
+										<p><strong>Quick event reminder templates:</strong></p>
+										<div className="admin-reminder-buttons">
+											{content.events.map((item, index) => (
+												<div key={index} className="admin-reminder-group">
+													<span className="admin-reminder-label">{item.title}:</span>
+													<button
+														type="button"
+														className="admin-button admin-button--sm"
+														onClick={() => setupReminderTemplate(index, "reminder")}
+													>
+														Reminder: {item.title}
+													</button>
+													<button
+														type="button"
+														className="admin-button admin-button--sm"
+														onClick={() => setupReminderTemplate(index, "today")}
+													>
+														Today: {item.title}
+													</button>
+													<button
+														type="button"
+														className="admin-button admin-button--sm"
+														onClick={() => setupReminderTemplate(index, "tomorrow")}
+													>
+														Tomorrow: {item.title}
+													</button>
+													<button
+														type="button"
+														className="admin-button admin-button--sm"
+														onClick={() => setupReminderTemplate(index, "soon")}
+													>
+														Happening Soon: {item.title}
+													</button>
+												</div>
+											))}
+										</div>
+									</div>
+								) : null}
+
+								<label htmlFor="broadcast-title">
+									Notification title
+									<input
+										id="broadcast-title"
+										type="text"
+										value={broadcastTitle}
+										onChange={(e) => {
+											setBroadcastTitle(e.target.value);
+											setBroadcastNotice("");
+										}}
+										placeholder="e.g. Reminder: Youth Sunday or Today: Youth Sunday"
+										required
+									/>
+								</label>
+
+								<label htmlFor="broadcast-body">
+									Notification message
+									<textarea
+										id="broadcast-body"
+										rows={4}
+										value={broadcastBody}
+										onChange={(e) => {
+											setBroadcastBody(e.target.value);
+											setBroadcastNotice("");
+										}}
+										placeholder="Enter the reminder message or click a template above..."
+										required
+									/>
+								</label>
+
+								<label htmlFor="broadcast-url">
+									Destination link on tap (defaults to /events)
+									<input
+										id="broadcast-url"
+										type="text"
+										value={broadcastUrl}
+										onChange={(e) => setBroadcastUrl(e.target.value)}
+										placeholder="/events"
+									/>
+								</label>
+
+								{broadcastTitle ? (
+									<div className="admin-notification-preview">
+										<p className="admin-notification-preview__kicker">PREVIEW ON SUBSCRIBER&apos;S DEVICE</p>
+										<div className="admin-notification-preview__card">
+											<div className="admin-notification-preview__header">
+												<Image
+													src="/icons/icon-192.png"
+													alt="Church Logo"
+													width={18}
+													height={18}
+													unoptimized
+												/>
+												<span>Testimony House · now</span>
+											</div>
+											<h4>{broadcastTitle}</h4>
+											<p>{broadcastBody}</p>
+										</div>
+									</div>
+								) : null}
+
+								{broadcastNotice ? (
+									<p className="admin-notice" role="status">
+										{broadcastNotice}
+									</p>
+								) : null}
+								{broadcastError ? (
+									<p className="admin-notice admin-notice--error" role="alert">
+										{broadcastError}
+									</p>
+								) : null}
+							</form>
+
+							<div className="admin-panel admin-panel--wide">
+								<div className="admin-panel__heading">
+									<div><p className="section-kicker">OPT-IN BROWSER DEVICES</p><h2>Notification subscribers</h2></div>
+									<button type="button" className="admin-button" onClick={() => void loadPushSubscriptions()} disabled={pushSubscriptionsLoading}>
+										{pushSubscriptionsLoading ? "Refreshing..." : "Refresh list"}
+									</button>
+								</div>
+								<p className="admin-notification-help">These devices have opted in to new sermon announcements, event reminders, and livestream alerts. No names, email addresses, or browser subscription details are shown here.</p>
+								<div className="admin-notification-count"><Bell size={18} /><span>Subscribed devices</span><strong>{pushSubscriptions.length}</strong></div>
+								{pushSubscriptionsLoading ? <p className="admin-notice" role="status">Loading subscribed devices...</p> : null}
+								{pushSubscriptionsError ? <p className="admin-notice admin-notice--error" role="alert">{pushSubscriptionsError}</p> : null}
+								{!pushSubscriptionsLoading && !pushSubscriptionsError ? (
+									<div className="admin-table-wrap">
+										<table className="admin-membership-table">
+											<thead><tr><th>Device</th><th>Subscribed since</th><th>Last updated</th></tr></thead>
+											<tbody>
+												{pushSubscriptions.length ? pushSubscriptions.map((subscription, index) => (
+													<tr key={subscription.id}>
+														<td>Subscribed device {pushSubscriptions.length - index}</td>
+														<td>{new Date(subscription.createdAt).toLocaleString()}</td>
+														<td>{new Date(subscription.updatedAt).toLocaleString()}</td>
+													</tr>
+												)) : <tr><td colSpan={3}>No devices have subscribed to notifications yet.</td></tr>}
+											</tbody>
+										</table>
+									</div>
+								) : null}
+							</div>
 						</div>
 					) : activeSection === "memberships" ? (
 						<div className="admin-panel admin-panel--wide">
