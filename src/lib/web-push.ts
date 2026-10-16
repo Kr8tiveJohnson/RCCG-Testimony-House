@@ -1,7 +1,7 @@
 import "server-only";
 import webpush, { type PushSubscription } from "web-push";
 import { getPostgresPool, isPostgresConfigured } from "./postgres";
-import type { SermonContent } from "./website-content-model";
+import type { EventContent, SermonContent } from "./website-content-model";
 
 type StoredSubscription = {
 	id: string;
@@ -117,6 +117,27 @@ export async function notifyNewSermons(previous: SermonContent[], current: Sermo
 			title: `New sermon: ${sermon.title}`,
 			body: `${sermon.speaker} · ${sermon.service}`,
 			url: "/sermons",
+		}));
+	}
+
+	const warning = outcomes.find((outcome) => outcome.warning)?.warning;
+	return { published: published.length, warning };
+}
+
+function eventKey(event: EventContent) {
+	return `${event.date}\u0000${event.title}`;
+}
+
+export async function notifyNewEvents(previous: EventContent[], current: EventContent[]) {
+	const existing = new Set(previous.map(eventKey));
+	const published = current.filter((event) => !existing.has(eventKey(event)));
+	const outcomes: DeliveryResult[] = [];
+
+	for (const event of published) {
+		outcomes.push(await sendPushToSubscribers({
+			title: `Upcoming event: ${event.title}`,
+			body: [event.time, event.theme].filter(Boolean).join(" · ") || "Join us at RCCG Testimony House.",
+			url: "/events",
 		}));
 	}
 

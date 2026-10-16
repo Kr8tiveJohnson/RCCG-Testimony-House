@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { isSameOriginRequest, isValidAdminSessionToken } from "../../../../lib/admin-session";
 import { getWebsiteContent, saveWebsiteContent } from "../../../../lib/website-content";
 import { isWebsiteContent } from "../../../../lib/website-content-model";
-import { notifyNewSermons } from "../../../../lib/web-push";
+import { notifyNewEvents, notifyNewSermons } from "../../../../lib/web-push";
 
 export const runtime = "nodejs";
 
@@ -47,11 +47,12 @@ export async function POST(request: Request) {
 		const savedContent = await saveWebsiteContent(content);
 		let notificationWarning: string | undefined;
 		try {
-			const notifications = await notifyNewSermons(previousContent.sermons, savedContent.sermons);
-			notificationWarning = notifications.warning;
+			const sermonNotifications = await notifyNewSermons(previousContent.sermons, savedContent.sermons);
+			const eventNotifications = await notifyNewEvents(previousContent.events, savedContent.events);
+			notificationWarning = sermonNotifications.warning || eventNotifications.warning;
 		} catch (error) {
-			notificationWarning = error instanceof Error ? error.message : "Sermons were published, but notifications could not be sent.";
-			console.error("Sermons were published but push notifications failed.", error);
+			notificationWarning = error instanceof Error ? error.message : "Content was published, but notifications could not be sent.";
+			console.error("Content was published but push notifications failed.", error);
 		}
 		return NextResponse.json(
 			{ success: true, content: savedContent, ...(notificationWarning ? { notificationWarning } : {}) },
